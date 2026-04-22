@@ -18,13 +18,22 @@ def parsing(input: str) -> dict:
             tmp_result[entry[0]] = entry[1]
             i += 1
     result = {
-        "start": None,
-        "goal": None,
-        "hubs": None,
-        "connections": None
+        "nb_drones": 0,
+        "hubs": [],
+        "connections": []
     }
     for key, value in tmp_result.items():
-        if "start" in key:
-            result["start"] = value
-        if "end" in key:
-            
+        if "hub" in key:
+            result["hubs"].append(value)
+        # if "start" in key:
+        #     result["start"] = value
+        # if "end" in key:
+        #     result["goal"] = value
+        if key == "connection":
+            result["connections"].append(value)
+        if key == "nb_drones":
+            try:
+                result["nb_drones"] = int(value)
+            except ValueError:
+                raise "Parsing error: nb_drones value has to be int"
+        
