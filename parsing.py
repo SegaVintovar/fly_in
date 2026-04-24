@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+# from pydantic import BaseModel, Field
 from fly_in import Hub, Drone, Connection
 
 
@@ -6,10 +6,10 @@ class ParsingError(Exception):
     def __init__(self, message: str):
         super.__init__(message)
 
-
-class Parsing(BaseModel):
-    @staticmethod
-    def parsing(input: str) -> dict:
+# BaseModel ?
+class Parsing():
+    # @staticmethod
+    def parsing(self, input: str) -> dict:
         '''
         Returns dict with keys "nb_drones", "hubs", "connections"
         '''
@@ -45,14 +45,21 @@ class Parsing(BaseModel):
                     raise "Parsing error: nb_drones value has to be int"
         print(result["hubs"])
         print()
+        result["hubs"] = self.parse_hubs(result["hubs"])
+        print(result["hubs"])
+        print()
         return result
 
-    @staticmethod
-    def parse_hubs(data: list[str]) -> list:
+    def meta_parser(meta_data_str: str) -> dict:
+        ...
+
+    def parse_hubs(self, data: list[str]) -> list:
         result: list[Hub] = []
         for entry in data:
             id = entry.split(" ")[0]
             positon = (entry.split(" ")[1], entry.split(" ")[2])
+            meta_data_str = entry.split(" ")[3]
+            print("meta: ", meta_data_str)
 
         return result
 
