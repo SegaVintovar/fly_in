@@ -21,13 +21,13 @@ class Hub():
         self.input = input
         self.id: str | None = None
         self.max_drones: int = 1
+        self.drones: list[Drone] = []
         self.color: str | None = None
         self.zone: str | None = None
         self.position: tuple[int, int] = (0, 0)
-        self.neighbour_hubs: list = []
+        self.neighbour_hubs: set[Hub] = set()
         self.type: str
         self.meta: str | None = None
-        # self.validate_input()
     
     class HubValidationError(Exception):
         def __init__(self, message: str):
@@ -71,14 +71,18 @@ class Hub():
 class Connection():
     def __init__(self, connection: tuple[str, str]):
         self.connection = connection
-        self.linked_members: tuple[Hub, Hub] | None = None
+        self.linked_members: tuple[Hub | None, Hub | None] = (None, None)
 
     def setup(self, hubs: list[Hub]) -> None:
+        # print(self.linked_members)
+        one_hub: Hub
+        two_hub: Hub
         for hub in hubs:
-            if hub.id == self.connection[0]:
-                self.linked_members[0] = hub
             if hub.id == self.connection[1]:
-                self.linked_members = hub
+                one_hub = hub
+            if hub.id == self.connection[0]:
+                two_hub = hub
+        self.linked_members = (one_hub, two_hub)
 
 
 class Map():
@@ -88,12 +92,41 @@ class Map():
         self.nb_drones = nb_drones
         self.hubs = hubs
         self.connections = connections
-    
+        self.drones: list[Drone] = []
+        self.start_hub: Hub
+        self.end_hub: Hub
+        # self.rank = as closer to the finish, as higher rank
+
     # to check !!!
     def validate_connections(self) -> None:
         normalized = sorted([member for member in self.connections])
         if len(normalized) != len(set(normalized)):
             raise Exception("Invalid connections: duplicates found")
+
+    def prepare_4_start(self) -> None:
+
+        for c in self.connections:
+            a, b = c.linked_members
+            a.neighbour_hubs.add(b)
+            b.neighbour_hubs.add(a)
+
+        for hub in self.hubs:
+            if "start" in hub.id:
+                self.start_hub = hub
+            if "end" in hub.id or "goal" in hub.id:
+                self.end_hub = hub
+
+        i = 0
+
+        while i < self.nb_drones:
+            self.start_hub.drones.append(
+                Drone(f"D{i + 1}", self.start_hub.position))
+            i += 1
+        
+        for hub in self.hubs:
+            print(hub.id, "\n")
+            for n in hub.neighbour_hubs:
+                print(n.id)
         
     # def __prepare__()
     
@@ -103,7 +136,14 @@ class Map():
         # loop through hubs starting from the end
             # loop through drons at the hub and check if they can go further
                 # if yes
-        ...
+        hubs_with_drones: list[Hub] = []
+        for hub in self.hubs:
+            if len(hub.drones) > 0:
+                hubs_with_drones.append(hub)
+        # How to pick a hub that is closer to the goal?
+        # try to go from goal to start?
+        # algo?
+
 
     def find_valid_path(self) -> None:
         # use BFS to find all possible ways to the finish and use them for

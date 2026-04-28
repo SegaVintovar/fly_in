@@ -14,8 +14,14 @@ def main() -> None:
                 hub.validate_input()
                 hub.validate_meta()
             my_map = Map(**data_4_map)
-            for hub in my_map.hubs:
-                print(hub.id, hub.position, hub.type)
+            # for hub in my_map.hubs:
+            #     print(hub.id, hub.position, hub.type)
+            for connection in my_map.connections:
+                connection.setup(my_map.hubs)
+                # print(connection.linked_members)
+            my_map.prepare_4_start()
+            
+
         # except Exception as e:
         #     print(str(e), file=sys.stderr)
         # else:

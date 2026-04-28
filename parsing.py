@@ -37,7 +37,7 @@ class Parsing():
                 result["hubs"].append((key, value))
                 continue
             if "connection" in key:
-                result["connections"].append((key, value))
+                result["connections"].append(value)
                 continue
             if "nb_drones" in key:
                 try:
@@ -49,7 +49,6 @@ class Parsing():
         result["hubs"] = self.parse_hubs(tmp["hubs"])
         result["connections"] = self.parse_connections(tmp["connections"])
 
-        print()
         return result
 
     def meta_parser(meta_data_str: str) -> dict:
@@ -62,9 +61,10 @@ class Parsing():
 
         return result
 
-    @staticmethod
-    def parse_connections(data: list[tuple[str, str]]) -> list:
+    def parse_connections(self, data: list[tuple[str, str]]) -> list:
         result: list[Connection] = []
         for entry in data:
-            result.append(Connection(entry))
+            # print(entry)
+            result.append(Connection(
+                (entry.split("-")[0], entry.split("-")[1])))
         return result
