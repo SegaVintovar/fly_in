@@ -6,6 +6,7 @@ class ParsingError(Exception):
     def __init__(self, message: str):
         super.__init__(message)
 
+
 # BaseModel ?
 class Parsing():
     # @staticmethod

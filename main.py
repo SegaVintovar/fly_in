@@ -20,6 +20,7 @@ def main() -> None:
                 connection.setup(my_map.hubs)
                 # print(connection.linked_members)
             my_map.prepare_4_start()
+            my_map.make_move()
             
 
         # except Exception as e:

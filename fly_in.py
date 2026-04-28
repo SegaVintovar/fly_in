@@ -136,10 +136,34 @@ class Map():
         # loop through hubs starting from the end
             # loop through drons at the hub and check if they can go further
                 # if yes
+        def move_to_next(hub_with_drones: list[Hub]):
+            # I need to use start from the hubs that are
+            # the nearest to the goal
+            # sort hubs by their rank - rank has to represent
+            # how close they are to the finish
+
+            for hub in hubs_with_drones:
+                for drone in hub.drones:
+                    # here i need to choose neighbours
+                    # that are closer to the goal
+
+                    hub.neighbour_hubs
+                    next_hub = None
+                    drones_can_be_moved = 0
+                    for nh in hub.neighbour_hubs:
+                        if nh.max_drones > drones_can_be_moved:
+                            drones_can_be_moved = nh.max_drones
+                            next_hub = nh
+                    while len(next_hub.drones) < next_hub.max_drones:
+                        next_hub.drones.append(hub.drones.pop(0))
+                        print(drone.id, " flew to the ", next_hub.id)
+
+
         hubs_with_drones: list[Hub] = []
         for hub in self.hubs:
             if len(hub.drones) > 0:
                 hubs_with_drones.append(hub)
+        move_to_next(hubs_with_drones)
         # How to pick a hub that is closer to the goal?
         # try to go from goal to start?
         # algo?
