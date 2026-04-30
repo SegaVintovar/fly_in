@@ -39,7 +39,7 @@ class Parsing():
                 result["hubs"].append((key, value))
                 continue
             if "connection" in key:
-                print(value)
+                # print(value)
                 result["connections"].append(value)
                 continue
             if "nb_drones" in key:
@@ -66,7 +66,7 @@ class Parsing():
 
     def parse_connections(self, data: list[tuple[str, str]]) -> list:
         result: list[Connection] = []
-        print(data)
+        # print(data)
         for entry in data:
             print(entry)
             tmp = entry.split()

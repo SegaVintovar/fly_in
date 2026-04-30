@@ -24,25 +24,21 @@ def main() -> None:
                 # print(connection.linked_members)
             my_map.prepare_4_start()
             graph = my_map.make_graph()
-            for key, item in graph.items():
-                print(key.id, end=": ")
-                for i in item:
-                    print(i.id, end=", ")
-                print()
-            # cons = my_map.connections
-            # for c in cons:
-            #     print(c)
 
-            # while len(my_map.end_hub.drones) != my_map.nb_drones:
-            #     my_map.make_move()
-            # #     print()
-            ui = GameUI(my_map)
-            ui.run()
-
+            # here is te code to check graph
+            # for key, item in graph.items():
+            #     print(key.id, end=": ")
+            #     for i in item:
+            #         print(i.id, end=", ")
+            #     print()
+            
+            # ui = GameUI(my_map)
+            # ui.run()
+            print(my_map.nb_drones)
             my_map.make_move()
-            # print()
-            # my_map.make_move()
-            # print()
+            print()
+            my_map.make_move()
+            print()
             # my_map.make_move()
             # print()
             # my_map.make_move()

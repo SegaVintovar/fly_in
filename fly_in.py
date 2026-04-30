@@ -150,8 +150,8 @@ class Map():
             i += 1
 
         # make pathfinding here?
-        # print("Path finding here")
-        # self.find_valid_path()
+        print("Path finding here")
+        self.find_valid_path()
 
         # print()
         # print("<hub: neighbours>")
@@ -181,7 +181,7 @@ class Map():
                 to_visit = [
                     h for h in hub.neighbour_hubs
                     if len(h.drones) < h.max_drones
-                    and hub.path
+                    # and hub.path
                     ]
                 while len(to_visit) > 0 and len(hub.drones) > 0:
                     next_hub = to_visit.pop()
@@ -205,9 +205,12 @@ class Map():
         for hub in self.hubs:
             if len(hub.drones) > 0 and hub.id != "goal":
                 hubs_with_drones.append(hub)
-        l = len(hubs_with_drones)
+        if len(hubs_with_drones) > 0:
         # print("before move to next")
-        move_to_next(hubs_with_drones)
+            move_to_next(hubs_with_drones)
+        else:
+            print("All drones has arrived to the goal")
+        print()
 
         # How to pick a hub that is closer to the goal?
         # try to go from goal to start?
@@ -222,18 +225,21 @@ class Map():
         # self.make_move()
         q = deque()
         start = self.start_hub
-        visited = [start]
+        visited = {start}
         start.visited = True
         q.append(start)
         path = []
         while q:
             current = q.popleft()
-            print("Current", current.id, end=" ")
-            for hub in current.neighbour_hubs:
+            # print("Current", current.id, end=" ")
+            # s = list(current.neighbour_hubs).sort(key=lambda x: x.max_drones, reverse=True)
+            s = sorted(list(current.neighbour_hubs), key=lambda x: x.max_drones, reverse=True)
+            print(s)
+            for hub in s:
                 # here i need to check for the max cap of hub, their zones and link_cap
                 if not hub.visited:
                     hub.visited = True
-                    visited.append(hub)
+                    visited.add(hub)
                     if hub.id == "goal":
                         hub.path = True
                         q = False

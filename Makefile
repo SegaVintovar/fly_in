@@ -15,7 +15,7 @@ install:
 # maps/hard/03_ultimate_challenge.txt
 # maps/challenger/01_the_impossible_dream.txt
 run:
-	virt_env/bin/python3 main.py maps/hard/02_capacity_hell.txt
+	virt_env/bin/python3 main.py maps/easy/02_simple_fork.txt
 debug:
 	python3 -m pdb fly_in.py
 clean:
