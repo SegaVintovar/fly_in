@@ -12,7 +12,8 @@ class Drone():
     def __init__(self, id: str, location: tuple[int, int]):
         self.id = id
         self.location = location
-        self.visited_hubs = []
+        self.visited_hubs = set()
+        self.on_the_way = False
 
 
 class Hub():
@@ -36,19 +37,20 @@ class Hub():
     def validate_input(self) -> None:
         # print(self.input)
         self.type = self.input[0]
-        tmp = self.input[1].split(" ")
+        tmp = self.input[1].split()
         if len(tmp) == 3:
             self.id, x, y = tmp
-        elif len(tmp) == 4:
-            self.id, x, y, self.meta = tmp
+        elif len(tmp) >= 4:
+            self.id, x, y = tmp[0], tmp[1], tmp[2]
+            self.meta = " ".join(tmp[3:])
         else:
-            raise ValueError(f"{self.input} is incorrect")
+            raise ValueError(f"{tmp} is incorrect")
         try:
             self.position = (int(x), int(y))
         except Exception as e:
-            raise str(e)
+            raise str(e) + ": position values have to be int"
         # return self.id + f"{self.position}" + self.meta
-    
+
     def validate_meta(self) -> None:
         if self.meta:
             self.meta = self.meta.strip("[]")
@@ -104,6 +106,8 @@ class Map():
             raise Exception("Invalid connections: duplicates found")
 
     def prepare_4_start(self) -> None:
+        for connection in self.connections:
+            connection.setup(self.hubs)
 
         for c in self.connections:
             a, b = c.linked_members
@@ -123,10 +127,15 @@ class Map():
                 Drone(f"D{i + 1}", self.start_hub.position))
             i += 1
         
+        # make pathfinding here?
+        print()
+        print("<hub: neighbours>")
         for hub in self.hubs:
-            print(hub.id, "\n")
+            print(hub.id, end=": ")
             for n in hub.neighbour_hubs:
-                print(n.id)
+                print(n.id, end=", ")
+            print()
+        print()
         
     # def __prepare__()
     
@@ -136,34 +145,82 @@ class Map():
         # loop through hubs starting from the end
             # loop through drons at the hub and check if they can go further
                 # if yes
-        def move_to_next(hub_with_drones: list[Hub]):
+        def move_to_next(hubs_with_drones: list[Hub]):
             # I need to use start from the hubs that are
             # the nearest to the goal
             # sort hubs by their rank - rank has to represent
             # how close they are to the finish
-
+            # sorted by rank and rank is distance from the goal multipliyed by in path(1 or 0)
             for hub in hubs_with_drones:
-                for drone in hub.drones:
-                    # here i need to choose neighbours
-                    # that are closer to the goal
+                # here 
+                to_visit = [h for h in hub.neighbour_hubs if len(h.drones) < h.max_drones]
+                while len(to_visit) > 0 and len(hub.drones) > 0:
+                    next_hub = to_visit.pop()
+                    drone = hub.drones.pop()
+                    drone.on_the_way = True
+                    drone.position = next_hub.position
+                    next_hub.drones.append(drone)
+                    drone.visited_hubs.add(hub)
+                    print(
+                        drone.id,
+                        " flew to the ",
+                        next_hub.id,
+                        end=", ")
+                    if next_hub.max_drones > len(next_hub.drones):
+                        to_visit.append(next_hub)
+                    else:
+                        break
+                hubs_with_drones.remove(hub)
+                    
 
-                    hub.neighbour_hubs
-                    next_hub = None
-                    drones_can_be_moved = 0
-                    for nh in hub.neighbour_hubs:
-                        if nh.max_drones > drones_can_be_moved:
-                            drones_can_be_moved = nh.max_drones
-                            next_hub = nh
-                    while len(next_hub.drones) < next_hub.max_drones:
-                        next_hub.drones.append(hub.drones.pop(0))
-                        print(drone.id, " flew to the ", next_hub.id)
+                # for drone in hub.drones:
+                #     if
 
+
+
+                #     # here i need to choose neighbours
+                #     # that are closer to the goal
+
+
+                #     next_hub = None
+                #     drones_can_be_moved = 0
+                #     for nh in hub.neighbour_hubs:
+                #         if (
+                #             nh.max_drones > drones_can_be_moved
+                #             and nh not in drone.visited_hubs
+                #                 ):
+                #             drones_can_be_moved = nh.max_drones
+                #             next_hub = nh
+                #             while (
+                #                 len(next_hub.drones) <= next_hub.max_drones
+                #                     and len(hub.drones) > 0):
+                #                 hub.drones.remove(drone)
+                #                 drone.position = next_hub.position
+                #                 next_hub.drones.append(drone)
+                #                 drone.visited_hubs.add(hub)
+                #                 print(
+                #                     drone.id,
+                #                     " flew to the ",
+                #                     next_hub.id,
+                #                     end=", ")
 
         hubs_with_drones: list[Hub] = []
         for hub in self.hubs:
-            if len(hub.drones) > 0:
+            if len(hub.drones) > 0 and hub.id != "goal":
                 hubs_with_drones.append(hub)
+        l = len(hubs_with_drones)
+        print("before move to next")
         move_to_next(hubs_with_drones)
+        # while len(self.end_hub.drones) != self.nb_drones:
+        #     move_to_next(hubs_with_drones)
+        #     for hub in self.hubs:
+        #         if len(hub.drones) > 0 and hub.id != "goal":
+        #             hubs_with_drones.append(hub)
+        #     l = len(hubs_with_drones)
+            
+            # print()
+            # l -= 1
+        
         # How to pick a hub that is closer to the goal?
         # try to go from goal to start?
         # algo?

@@ -1,0 +1,4 @@
+30.04
+today i need to make pathfinding
+make algo to follow the path when it tries to move a drone to the next hub
+

@@ -1,6 +1,7 @@
 import sys
 from parsing import Parsing
 from fly_in import Map, Hub
+from game_ui import GameUI
 
 def main() -> None:
     # print("starts")
@@ -20,7 +21,26 @@ def main() -> None:
                 connection.setup(my_map.hubs)
                 # print(connection.linked_members)
             my_map.prepare_4_start()
-            my_map.make_move()
+            # while len(my_map.end_hub.drones) != my_map.nb_drones:
+            #     my_map.make_move()
+            # #     print()
+            ui = GameUI(my_map)
+            ui.run()
+
+            # my_map.make_move()
+            # print()
+            # my_map.make_move()
+            # print()
+            # my_map.make_move()
+            # print()
+            # my_map.make_move()
+            # print()
+            # my_map.make_move()
+            for hub in my_map.hubs:
+                print(hub.id, len(hub.drones), hub.max_drones)
+
+
+
             
 
         # except Exception as e:
