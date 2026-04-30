@@ -10,24 +10,36 @@ def main() -> None:
         # try:
         with open(sys.argv[1], "r") as f:
             config_data = f.read()
+            # print("Config data: ", config_data)
             data_4_map = parser.parsing(config_data)
+            # print(data_4_map)
             for hub in data_4_map["hubs"]:
                 hub.validate_input()
                 hub.validate_meta()
             my_map = Map(**data_4_map)
             # for hub in my_map.hubs:
             #     print(hub.id, hub.position, hub.type)
-            for connection in my_map.connections:
-                connection.setup(my_map.hubs)
+            # for connection in my_map.connections:
+            #     connection.setup(my_map.hubs)
                 # print(connection.linked_members)
             my_map.prepare_4_start()
+            graph = my_map.make_graph()
+            for key, item in graph.items():
+                print(key.id, end=": ")
+                for i in item:
+                    print(i.id, end=", ")
+                print()
+            # cons = my_map.connections
+            # for c in cons:
+            #     print(c)
+
             # while len(my_map.end_hub.drones) != my_map.nb_drones:
             #     my_map.make_move()
             # #     print()
             ui = GameUI(my_map)
             ui.run()
 
-            # my_map.make_move()
+            my_map.make_move()
             # print()
             # my_map.make_move()
             # print()

@@ -1,4 +1,6 @@
 from enum import Enum
+from collections import deque
+from typing import Set
 
 
 class Zone(Enum):
@@ -26,10 +28,12 @@ class Hub():
         self.color: str | None = None
         self.zone: str | None = None
         self.position: tuple[int, int] = (0, 0)
-        self.neighbour_hubs: set[Hub] = set()
+        self.neighbour_hubs: Set = set()
         self.type: str
         self.meta: str | None = None
-    
+        self.path = False
+        self.visited = False
+
     class HubValidationError(Exception):
         def __init__(self, message: str):
             super.__init__(message)
@@ -38,6 +42,7 @@ class Hub():
         # print(self.input)
         self.type = self.input[0]
         tmp = self.input[1].split()
+        print(tmp)
         if len(tmp) == 3:
             self.id, x, y = tmp
         elif len(tmp) >= 4:
@@ -71,9 +76,11 @@ class Hub():
 
 
 class Connection():
-    def __init__(self, connection: tuple[str, str]):
+    def __init__(self, connection: tuple[str, str], meta: str | None = None):
         self.connection = connection
         self.linked_members: tuple[Hub | None, Hub | None] = (None, None)
+        self.link_cap = 1
+        self.meta = meta
 
     def setup(self, hubs: list[Hub]) -> None:
         # print(self.linked_members)
@@ -84,7 +91,21 @@ class Connection():
                 one_hub = hub
             if hub.id == self.connection[0]:
                 two_hub = hub
-        self.linked_members = (one_hub, two_hub)
+        try:
+            self.linked_members = (one_hub, two_hub)
+        except Exception as e:
+            print(str(e))
+            exit(1)
+        if self.meta:
+            tmp = self.meta.strip("[]")
+            tmp = tmp.split("=")
+            if len(tmp) > 1 and tmp[0] == "max_link_capacity":
+                try:
+                    self.link_cap = int(tmp[1])
+                except ValueError as e:
+                    raise str(e)
+            else:
+                raise ValueError(f"Provided meta is incorrect: {self.meta}")
 
 
 class Map():
@@ -97,6 +118,7 @@ class Map():
         self.drones: list[Drone] = []
         self.start_hub: Hub
         self.end_hub: Hub
+        # self.visited = False
         # self.rank = as closer to the finish, as higher rank
 
     # to check !!!
@@ -126,16 +148,19 @@ class Map():
             self.start_hub.drones.append(
                 Drone(f"D{i + 1}", self.start_hub.position))
             i += 1
-        
+
         # make pathfinding here?
-        print()
-        print("<hub: neighbours>")
-        for hub in self.hubs:
-            print(hub.id, end=": ")
-            for n in hub.neighbour_hubs:
-                print(n.id, end=", ")
-            print()
-        print()
+        # print("Path finding here")
+        # self.find_valid_path()
+
+        # print()
+        # print("<hub: neighbours>")
+        # for hub in self.hubs:
+        #     print(hub.id, end=": ")
+        #     for n in hub.neighbour_hubs:
+        #         print(n.id, end=", ")
+        #     print()
+        # print()
         
     # def __prepare__()
     
@@ -153,7 +178,11 @@ class Map():
             # sorted by rank and rank is distance from the goal multipliyed by in path(1 or 0)
             for hub in hubs_with_drones:
                 # here 
-                to_visit = [h for h in hub.neighbour_hubs if len(h.drones) < h.max_drones]
+                to_visit = [
+                    h for h in hub.neighbour_hubs
+                    if len(h.drones) < h.max_drones
+                    and hub.path
+                    ]
                 while len(to_visit) > 0 and len(hub.drones) > 0:
                     next_hub = to_visit.pop()
                     drone = hub.drones.pop()
@@ -172,61 +201,48 @@ class Map():
                         break
                 hubs_with_drones.remove(hub)
                     
-
-                # for drone in hub.drones:
-                #     if
-
-
-
-                #     # here i need to choose neighbours
-                #     # that are closer to the goal
-
-
-                #     next_hub = None
-                #     drones_can_be_moved = 0
-                #     for nh in hub.neighbour_hubs:
-                #         if (
-                #             nh.max_drones > drones_can_be_moved
-                #             and nh not in drone.visited_hubs
-                #                 ):
-                #             drones_can_be_moved = nh.max_drones
-                #             next_hub = nh
-                #             while (
-                #                 len(next_hub.drones) <= next_hub.max_drones
-                #                     and len(hub.drones) > 0):
-                #                 hub.drones.remove(drone)
-                #                 drone.position = next_hub.position
-                #                 next_hub.drones.append(drone)
-                #                 drone.visited_hubs.add(hub)
-                #                 print(
-                #                     drone.id,
-                #                     " flew to the ",
-                #                     next_hub.id,
-                #                     end=", ")
-
         hubs_with_drones: list[Hub] = []
         for hub in self.hubs:
             if len(hub.drones) > 0 and hub.id != "goal":
                 hubs_with_drones.append(hub)
         l = len(hubs_with_drones)
-        print("before move to next")
+        # print("before move to next")
         move_to_next(hubs_with_drones)
-        # while len(self.end_hub.drones) != self.nb_drones:
-        #     move_to_next(hubs_with_drones)
-        #     for hub in self.hubs:
-        #         if len(hub.drones) > 0 and hub.id != "goal":
-        #             hubs_with_drones.append(hub)
-        #     l = len(hubs_with_drones)
-            
-            # print()
-            # l -= 1
-        
+
         # How to pick a hub that is closer to the goal?
         # try to go from goal to start?
         # algo?
 
 
+    def make_graph(self):
+        return {hub: hub.neighbour_hubs for hub in self.hubs}
+
     def find_valid_path(self) -> None:
         # use BFS to find all possible ways to the finish and use them for
         # self.make_move()
-        ...
+        q = deque()
+        start = self.start_hub
+        visited = [start]
+        start.visited = True
+        q.append(start)
+        path = []
+        while q:
+            current = q.popleft()
+            print("Current", current.id, end=" ")
+            for hub in current.neighbour_hubs:
+                # here i need to check for the max cap of hub, their zones and link_cap
+                if not hub.visited:
+                    hub.visited = True
+                    visited.append(hub)
+                    if hub.id == "goal":
+                        hub.path = True
+                        q = False
+                        break
+                    # print("Goes to the queue", hub.id, hub.position, end=", ")
+                    q.append(hub)
+            # print()
+        # print("queue: ", list(q))
+        # print(visited)
+        # for h in visited:
+        #     print(h.id, end=", ")
+        

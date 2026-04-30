@@ -28,6 +28,7 @@ class Parsing():
                 # tmp_result[f"{i} " + entry[0]] = entry[1]
                 tmp_result[i] = (entry[0], entry[1])
                 i += 1
+        # print(tmp_result)
         result = {
             "nb_drones": 0,
             "hubs": [],
@@ -38,6 +39,7 @@ class Parsing():
                 result["hubs"].append((key, value))
                 continue
             if "connection" in key:
+                print(value)
                 result["connections"].append(value)
                 continue
             if "nb_drones" in key:
@@ -64,8 +66,16 @@ class Parsing():
 
     def parse_connections(self, data: list[tuple[str, str]]) -> list:
         result: list[Connection] = []
+        print(data)
         for entry in data:
-            # print(entry)
-            result.append(Connection(
-                (entry.split("-")[0], entry.split("-")[1])))
+            print(entry)
+            tmp = entry.split()
+            if len(tmp) > 1:
+                result.append(Connection(
+                    (tmp[0].split("-")[0], tmp[0].split("-")[1]), tmp[1]))
+            elif len(tmp) == 1:
+                result.append(Connection(
+                    (tmp[0].split("-")[0], tmp[0].split("-")[1]), None))
+            else:
+                raise ValueError(f"Connection entry is invalid: {entry}")
         return result

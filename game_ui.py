@@ -8,15 +8,16 @@ BLACK = (0, 0, 0)
 RED = (220, 50, 50)
 BLUE = (60, 120, 255)
 
+
 class GameUI:
     def __init__(self, my_map: Map):
         pygame.init()
         self.my_map = my_map
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode((1920, 1080))
         pygame.display.set_caption("Fly In")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 24)
-        self.step_delay_ms = 500
+        self.step_delay_ms = 1000
         self.last_step = 0
 
         self.points = self._build_points()
@@ -30,7 +31,7 @@ class GameUI:
 
         def convert(pos):
             x, y = pos
-            sx = 60 + (x - min_x) * 70
+            sx = 60 + (x - min_x) * 180
             sy = 60 + (y - min_y) * 70
             return sx, sy
 
@@ -49,18 +50,26 @@ class GameUI:
         for hub in self.my_map.hubs:
             pos = self.points[hub.id]
             color = RED if hub == self.my_map.start_hub else BLUE if hub == self.my_map.end_hub else BLACK
-            pygame.draw.circle(self.screen, color, pos, 12)
+            pygame.draw.circle(self.screen, color, pos, 15)
             label = self.font.render(hub.id, True, BLACK)
             self.screen.blit(label, (pos[0] + 15, pos[1] - 10))
 
             # Draw drones on top of the hub
             for i, drone in enumerate(hub.drones):
-                pygame.draw.circle(self.screen, (0, 180, 0), (pos[0] + 25 + i * 10, pos[1] + 20), 5)
+                pygame.draw.circle(self.screen,
+                                   BLUE,
+                                   (pos[0], pos[1] + 20 + i * 15),
+                                   6,
+                                   draw_top_right=True,
+                                   draw_top_left=True,
+                                   draw_bottom_left=True,
+                                   draw_bottom_right=True)
 
         pygame.display.flip()
 
     def run(self):
         running = True
+
         try:
             while running:
                 now = pygame.time.get_ticks()
@@ -73,7 +82,6 @@ class GameUI:
                 if now - self.last_step >= self.step_delay_ms:
                     self.my_map.make_move()
                     self.last_step = now
-
                 self.draw()
                 self.clock.tick(60)
         finally:
