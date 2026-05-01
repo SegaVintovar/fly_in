@@ -2,6 +2,7 @@ from enum import Enum
 from collections import deque
 from typing import Set
 
+global COUNT
 
 class Zone(Enum):
     restricted = 2
@@ -42,7 +43,7 @@ class Hub():
         # print(self.input)
         self.type = self.input[0]
         tmp = self.input[1].split()
-        print(tmp)
+        # print(tmp)
         if len(tmp) == 3:
             self.id, x, y = tmp
         elif len(tmp) >= 4:
@@ -150,8 +151,8 @@ class Map():
             i += 1
 
         # make pathfinding here?
-        print("Path finding here")
-        self.find_valid_path()
+        # print("Path finding here")
+        # self.find_valid_path()
 
         # print()
         # print("<hub: neighbours>")
@@ -170,18 +171,23 @@ class Map():
         # loop through hubs starting from the end
             # loop through drons at the hub and check if they can go further
                 # if yes
+        print(COUNT)
         def move_to_next(hubs_with_drones: list[Hub]):
             # I need to use start from the hubs that are
             # the nearest to the goal
             # sort hubs by their rank - rank has to represent
             # how close they are to the finish
             # sorted by rank and rank is distance from the goal multipliyed by in path(1 or 0)
+            COUNT += 1
+            print(COUNT)
+            for hub in hubs_with_drones:
+                print(hub.id)
             for hub in hubs_with_drones:
                 # here 
                 to_visit = [
                     h for h in hub.neighbour_hubs
                     if len(h.drones) < h.max_drones
-                    # and hub.path
+                    # and hub.path == True
                     ]
                 while len(to_visit) > 0 and len(hub.drones) > 0:
                     next_hub = to_visit.pop()
@@ -205,8 +211,10 @@ class Map():
         for hub in self.hubs:
             if len(hub.drones) > 0 and hub.id != "goal":
                 hubs_with_drones.append(hub)
+                print(hub.id)
+        print(len(hubs_with_drones))
         if len(hubs_with_drones) > 0:
-        # print("before move to next")
+            print("before move to next")
             move_to_next(hubs_with_drones)
         else:
             print("All drones has arrived to the goal")
@@ -234,7 +242,7 @@ class Map():
             # print("Current", current.id, end=" ")
             # s = list(current.neighbour_hubs).sort(key=lambda x: x.max_drones, reverse=True)
             s = sorted(list(current.neighbour_hubs), key=lambda x: x.max_drones, reverse=True)
-            print(s)
+            # print(s)
             for hub in s:
                 # here i need to check for the max cap of hub, their zones and link_cap
                 if not hub.visited:

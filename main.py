@@ -32,8 +32,8 @@ def main() -> None:
             #         print(i.id, end=", ")
             #     print()
             
-            # ui = GameUI(my_map)
-            # ui.run()
+            ui = GameUI(my_map)
+            ui.run()
             print(my_map.nb_drones)
             my_map.make_move()
             print()

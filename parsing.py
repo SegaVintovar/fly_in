@@ -68,7 +68,6 @@ class Parsing():
         result: list[Connection] = []
         # print(data)
         for entry in data:
-            print(entry)
             tmp = entry.split()
             if len(tmp) > 1:
                 result.append(Connection(

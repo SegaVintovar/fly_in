@@ -45,6 +45,8 @@ class GameUI:
             a, b = connection.linked_members
             if a and b:
                 pygame.draw.line(self.screen, BLACK, self.points[a.id], self.points[b.id], 2)
+                # to_print = self.font.render((str(connection.link_cap) + " " + connection.connection), True, BLACK)
+                # self.screen.blit(to_print, (pos[0] + 15, pos[1] - 10))
 
         # Draw hubs
         for hub in self.my_map.hubs:
@@ -69,9 +71,9 @@ class GameUI:
 
     def run(self):
         running = True
-
         try:
             while running:
+     
                 now = pygame.time.get_ticks()
 
                 for event in pygame.event.get():
