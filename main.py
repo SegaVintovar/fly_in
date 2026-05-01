@@ -26,26 +26,26 @@ def main() -> None:
             graph = my_map.make_graph()
 
             # here is te code to check graph
-            # for key, item in graph.items():
-            #     print(key.id, end=": ")
-            #     for i in item:
-            #         print(i.id, end=", ")
-            #     print()
-            
-            ui = GameUI(my_map)
-            ui.run()
-            print(my_map.nb_drones)
-            my_map.make_move()
-            print()
-            my_map.make_move()
-            print()
-            # my_map.make_move()
-            # print()
-            # my_map.make_move()
-            # print()
-            # my_map.make_move()
+            for key, item in graph.items():
+                print(key.id, end=": ")
+                for i in item:
+                    print(i.id, end=", ")
+                print()
             for hub in my_map.hubs:
-                print(hub.id, len(hub.drones), hub.max_drones)
+                print(hub.id, hub.zone)
+            # ui = GameUI(my_map)
+            # ui.run()
+            # print(my_map.nb_drones)
+            # my_map.make_move()
+            # print()
+            # my_map.make_move()
+            print()
+            # my_map.make_move()
+            # print()
+            # my_map.make_move()
+            # print()
+            # my_map.make_move()
+      
 
 
 

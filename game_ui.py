@@ -13,7 +13,7 @@ class GameUI:
     def __init__(self, my_map: Map):
         pygame.init()
         self.my_map = my_map
-        self.screen = pygame.display.set_mode((1280, 800))
+        self.screen = pygame.display.set_mode((1800, 1200))
         pygame.display.set_caption("Fly In")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 24)
@@ -31,8 +31,8 @@ class GameUI:
 
         def convert(pos):
             x, y = pos
-            sx = 60 + (x - min_x) * 180
-            sy = 60 + (y - min_y) * 70
+            sx = 60 + (x - min_x) * 120
+            sy = 60 + (y - min_y) * 120
             return sx, sy
 
         return {hub.id: convert(hub.position) for hub in self.my_map.hubs}

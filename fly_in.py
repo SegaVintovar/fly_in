@@ -5,10 +5,10 @@ from typing import Set
 global COUNT
 
 class Zone(Enum):
-    restricted = 2
-    blocked = 1000
-    normal = 1
-    priority = 1
+    RESTRICTED = 2
+    BLOCKED = 1000
+    NORMAL = 1
+    PRIORITY = 1
 
 
 class Drone():
@@ -27,7 +27,7 @@ class Hub():
         self.max_drones: int = 1
         self.drones: list[Drone] = []
         self.color: str | None = None
-        self.zone: str | None = None
+        self.zone: str | None = "NORMAL"
         self.position: tuple[int, int] = (0, 0)
         self.neighbour_hubs: Set = set()
         self.type: str
@@ -40,10 +40,8 @@ class Hub():
             super.__init__(message)
 
     def validate_input(self) -> None:
-        # print(self.input)
         self.type = self.input[0]
         tmp = self.input[1].split()
-        # print(tmp)
         if len(tmp) == 3:
             self.id, x, y = tmp
         elif len(tmp) >= 4:
@@ -55,7 +53,6 @@ class Hub():
             self.position = (int(x), int(y))
         except Exception as e:
             raise str(e) + ": position values have to be int"
-        # return self.id + f"{self.position}" + self.meta
 
     def validate_meta(self) -> None:
         if self.meta:
@@ -72,13 +69,11 @@ class Hub():
                 else:
                     raise self.HubValidationError(
                         f"{self.id} recieved invalid metadata{entry}")
-            # return (f"max drones: {self.max_drones}, " +
-            #         f"color: {self.color}, zone: {self.zone}")
 
 
 class Connection():
     def __init__(self, connection: tuple[str, str], meta: str | None = None):
-        self.connection = connection
+        self.connection = sorted(connection)
         self.linked_members: tuple[Hub | None, Hub | None] = (None, None)
         self.link_cap = 1
         self.meta = meta
@@ -119,10 +114,7 @@ class Map():
         self.drones: list[Drone] = []
         self.start_hub: Hub
         self.end_hub: Hub
-        # self.visited = False
-        # self.rank = as closer to the finish, as higher rank
 
-    # to check !!!
     def validate_connections(self) -> None:
         normalized = sorted([member for member in self.connections])
         if len(normalized) != len(set(normalized)):
@@ -151,48 +143,42 @@ class Map():
             i += 1
 
         # make pathfinding here?
-        # print("Path finding here")
         # self.find_valid_path()
-
-        # print()
-        # print("<hub: neighbours>")
-        # for hub in self.hubs:
-        #     print(hub.id, end=": ")
-        #     for n in hub.neighbour_hubs:
-        #         print(n.id, end=", ")
-        #     print()
-        # print()
-        
-    # def __prepare__()
-    
-    # we need to validate the hubs and connections
 
     def make_move(self) -> None:
         # loop through hubs starting from the end
             # loop through drons at the hub and check if they can go further
                 # if yes
-        print(COUNT)
         def move_to_next(hubs_with_drones: list[Hub]):
             # I need to use start from the hubs that are
             # the nearest to the goal
             # sort hubs by their rank - rank has to represent
             # how close they are to the finish
             # sorted by rank and rank is distance from the goal multipliyed by in path(1 or 0)
-            COUNT += 1
-            print(COUNT)
-            for hub in hubs_with_drones:
-                print(hub.id)
-            for hub in hubs_with_drones:
+
+            while hubs_with_drones:
+                hub = hubs_with_drones.pop()
                 # here 
+                # print(hub.id)
                 to_visit = [
                     h for h in hub.neighbour_hubs
                     if len(h.drones) < h.max_drones
-                    # and hub.path == True
+                    and h.zone in ["NORMAL", "PRIORITY"]
+                    # and len(h.neighbour_hubs) > 1
                     ]
                 while len(to_visit) > 0 and len(hub.drones) > 0:
                     next_hub = to_visit.pop()
+                    # if self.end_hub in next_hub.neighbour_hubs:
+
+                    if len(next_hub.neighbour_hubs) < 2 and next_hub.id != "goal":
+                        continue
                     drone = hub.drones.pop()
-                    drone.on_the_way = True
+                    if next_hub not in drone.visited_hubs:
+                        drone.visited_hubs.add(next_hub)
+                    else:
+                        tmp = next_hub
+                        next_hub = to_visit.pop()
+                        to_visit.append(tmp)
                     drone.position = next_hub.position
                     next_hub.drones.append(drone)
                     drone.visited_hubs.add(hub)
@@ -205,24 +191,21 @@ class Map():
                         to_visit.append(next_hub)
                     else:
                         break
-                hubs_with_drones.remove(hub)
-                    
+
         hubs_with_drones: list[Hub] = []
         for hub in self.hubs:
             if len(hub.drones) > 0 and hub.id != "goal":
                 hubs_with_drones.append(hub)
-                print(hub.id)
-        print(len(hubs_with_drones))
+                # print(hub.id)
+        # print(len(hubs_with_drones))
+        # sort these hubs by the rank
         if len(hubs_with_drones) > 0:
-            print("before move to next")
+            # print("before move to next")
             move_to_next(hubs_with_drones)
         else:
             print("All drones has arrived to the goal")
+            exit(0)
         print()
-
-        # How to pick a hub that is closer to the goal?
-        # try to go from goal to start?
-        # algo?
 
 
     def make_graph(self):
@@ -239,7 +222,6 @@ class Map():
         path = []
         while q:
             current = q.popleft()
-            # print("Current", current.id, end=" ")
             # s = list(current.neighbour_hubs).sort(key=lambda x: x.max_drones, reverse=True)
             s = sorted(list(current.neighbour_hubs), key=lambda x: x.max_drones, reverse=True)
             # print(s)
@@ -254,9 +236,5 @@ class Map():
                         break
                     # print("Goes to the queue", hub.id, hub.position, end=", ")
                     q.append(hub)
-            # print()
-        # print("queue: ", list(q))
-        # print(visited)
-        # for h in visited:
-        #     print(h.id, end=", ")
+
         

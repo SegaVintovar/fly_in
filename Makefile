@@ -15,7 +15,7 @@ install:
 # maps/hard/03_ultimate_challenge.txt
 # maps/challenger/01_the_impossible_dream.txt
 run:
-	virt_env/bin/python3 main.py maps/hard/03_ultimate_challenge.txt
+	virt_env/bin/python3 main.py maps/medium/03_priority_puzzle.txt
 debug:
 	python3 -m pdb fly_in.py
 clean:

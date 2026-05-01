@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Easy: Linear Path",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "args": ["maps/easy/01_linear_path.txt"],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Hard: Ultimate Challenge",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "args": ["maps/hard/03_ultimate_challenge.txt"],
+            "console": "integratedTerminal"
+        }
+    ]
+}
