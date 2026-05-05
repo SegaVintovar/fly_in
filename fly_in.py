@@ -116,9 +116,19 @@ class Map():
         self.end_hub: Hub
 
     def validate_connections(self) -> None:
-        normalized = sorted([member for member in self.connections])
-        if len(normalized) != len(set(normalized)):
+        normalized = sorted([member.connection for member in self.connections])
+        print(normalized)
+        to_compare = set()
+        for n in normalized:
+            to_compare.add(n)
+        if len(normalized) != len(to_compare):
             raise Exception("Invalid connections: duplicates found")
+
+    def find_connection(self, hub1: Hub, hub2: Hub) -> int:
+        for con in self.connections:
+            linked_m = con.linked_members
+            if linked_m == (hub1, hub2).sort():
+                return con.link_cap
 
     def prepare_4_start(self) -> None:
         for connection in self.connections:
@@ -142,9 +152,16 @@ class Map():
                 Drone(f"D{i + 1}", self.start_hub.position))
             i += 1
 
+        # here Exception could happen. use try block here or on top of this method 
+        # current version also do not work
+        # self.validate_connections()
+
         # make pathfinding here?
         # self.find_valid_path()
-
+        # make path finding and ranking of the hubs
+        for hub in self.hubs:
+            print(hub.id, hub.max_drones, hub.path, [h.id for h in hub.neighbour_hubs])
+        
     def make_move(self) -> None:
         # loop through hubs starting from the end
             # loop through drons at the hub and check if they can go further
@@ -166,10 +183,21 @@ class Map():
                     and h.zone in ["NORMAL", "PRIORITY"]
                     # and len(h.neighbour_hubs) > 1
                     ]
-                while len(to_visit) > 0 and len(hub.drones) > 0:
+                second_option = [
+                    h for h in hub.neighbour_hubs
+                    if len(h.drones) < h.max_drones
+                    and h.zone == "RESTRICTED"
+                ]
+                i = 0
+                # check link cap here
+
+                while to_visit and hub.drones:
                     next_hub = to_visit.pop()
                     # if self.end_hub in next_hub.neighbour_hubs:
-
+                    # here goes link cap check
+                    # if self.find_connection(hub, next_hub) <= i:
+                    #     to_visit.remove(next_hub)
+                    #     break
                     if len(next_hub.neighbour_hubs) < 2 and next_hub.id != "goal":
                         continue
                     drone = hub.drones.pop()
@@ -182,6 +210,7 @@ class Map():
                     drone.position = next_hub.position
                     next_hub.drones.append(drone)
                     drone.visited_hubs.add(hub)
+                    i += 1
                     print(
                         drone.id,
                         " flew to the ",
@@ -236,5 +265,5 @@ class Map():
                         break
                     # print("Goes to the queue", hub.id, hub.position, end=", ")
                     q.append(hub)
-
+        print([h.id for h in visited])
         

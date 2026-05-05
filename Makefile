@@ -4,18 +4,18 @@ install:
 
 # AI made these for me:
 # Example map paths:
-# maps/easy/01_linear_path.txt
-# maps/easy/02_simple_fork.txt
-# maps/easy/03_basic_capacity.txt
-# maps/medium/01_dead_end_trap.txt
-# maps/medium/02_circular_loop.txt
-# maps/medium/03_priority_puzzle.txt
-# maps/hard/01_maze_nightmare.txt
-# maps/hard/02_capacity_hell.txt
-# maps/hard/03_ultimate_challenge.txt
+# maps/easy/01_linear_path.txt	i do not finish with the last drone
+# maps/easy/02_simple_fork.txt	works 5 steps
+# maps/easy/03_basic_capacity.txt	works 4 steps
+# maps/medium/01_dead_end_trap.txt	works -8 steps, stoped working with 10d
+# maps/medium/02_circular_loop.txt	doesn work, prints spaces
+# maps/medium/03_priority_puzzle.txt	works, 7 steps
+# maps/hard/01_maze_nightmare.txt		crash after first move
+# maps/hard/02_capacity_hell.txt		almost all drones arrived, but some got stuck
+# maps/hard/03_ultimate_challenge.txt	
 # maps/challenger/01_the_impossible_dream.txt
 run:
-	virt_env/bin/python3 main.py maps/medium/03_priority_puzzle.txt
+	virt_env/bin/python3 main.py maps/hard/02_capacity_hell.txt
 debug:
 	python3 -m pdb fly_in.py
 clean:

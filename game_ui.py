@@ -73,7 +73,7 @@ class GameUI:
         running = True
         try:
             while running:
-     
+
                 now = pygame.time.get_ticks()
 
                 for event in pygame.event.get():
@@ -85,7 +85,7 @@ class GameUI:
                     self.my_map.make_move()
                     self.last_step = now
                 self.draw()
-                self.clock.tick(60)
+                self.clock.tick(160)
         finally:
             pygame.quit()
             sys.exit()
