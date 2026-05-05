@@ -2,3 +2,29 @@
 today i need to make pathfinding
 make algo to follow the path when it tries to move a drone to the next hub
 
+
+
+
+
+AI suggestion for the hub ranking
+# In prepare_4_start(), after finding start/end:
+self.rank_hubs_by_distance()
+
+# Add this method:
+def rank_hubs_by_distance(self):
+    """BFS from end_hub to compute distance rank for each hub."""
+    q = deque([(self.end_hub, 0)])
+    ranks = {self.end_hub: 0}
+    while q:
+        hub, dist = q.popleft()
+        for neigh in hub.neighbour_hubs:
+            if neigh not in ranks:
+                ranks[neigh] = dist + 1
+                q.append((neigh, dist + 1))
+    for hub in self.hubs:
+        hub.rank = ranks.get(hub, float('inf'))
+
+
+at this point i need smth that marks all possible pathes
+to multiply self.rank_hubs() by is_Path which is 0 or 1
+

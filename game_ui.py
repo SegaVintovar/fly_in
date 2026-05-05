@@ -13,7 +13,7 @@ class GameUI:
     def __init__(self, my_map: Map):
         pygame.init()
         self.my_map = my_map
-        self.screen = pygame.display.set_mode((2500, 1200))
+        self.screen = pygame.display.set_mode((1800, 1200))
         pygame.display.set_caption("Fly In")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 24)
@@ -82,7 +82,8 @@ class GameUI:
 
                 # Advance simulation on a timer
                 if now - self.last_step >= self.step_delay_ms:
-                    self.my_map.make_move()
+                    running = self.my_map.make_move()
+                    print()
                     self.last_step = now
                 self.draw()
                 self.clock.tick(160)

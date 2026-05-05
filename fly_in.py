@@ -114,6 +114,7 @@ class Map():
         self.drones: list[Drone] = []
         self.start_hub: Hub
         self.end_hub: Hub
+        self.all_pathes: list[tuple[list[Hub], int]]
 
     def validate_connections(self) -> None:
         normalized = sorted([member.connection for member in self.connections])
@@ -162,7 +163,7 @@ class Map():
         for hub in self.hubs:
             print(hub.id, hub.max_drones, hub.path, [h.id for h in hub.neighbour_hubs])
         
-    def make_move(self) -> None:
+    def make_move(self) -> bool:
         # loop through hubs starting from the end
             # loop through drons at the hub and check if they can go further
                 # if yes
@@ -207,7 +208,7 @@ class Map():
                         tmp = next_hub
                         next_hub = to_visit.pop()
                         to_visit.append(tmp)
-                    drone.position = next_hub.position
+                    drone.location = next_hub.position
                     next_hub.drones.append(drone)
                     drone.visited_hubs.add(hub)
                     i += 1
@@ -231,9 +232,11 @@ class Map():
         if len(hubs_with_drones) > 0:
             # print("before move to next")
             move_to_next(hubs_with_drones)
+            return True
         else:
             print("All drones has arrived to the goal")
-            exit(0)
+            return False
+            # exit(0)
         print()
 
 
@@ -243,27 +246,42 @@ class Map():
     def find_valid_path(self) -> None:
         # use BFS to find all possible ways to the finish and use them for
         # self.make_move()
-        q = deque()
-        start = self.start_hub
-        visited = {start}
-        start.visited = True
-        q.append(start)
-        path = []
-        while q:
-            current = q.popleft()
-            # s = list(current.neighbour_hubs).sort(key=lambda x: x.max_drones, reverse=True)
-            s = sorted(list(current.neighbour_hubs), key=lambda x: x.max_drones, reverse=True)
-            # print(s)
-            for hub in s:
-                # here i need to check for the max cap of hub, their zones and link_cap
-                if not hub.visited:
-                    hub.visited = True
-                    visited.add(hub)
-                    if hub.id == "goal":
-                        hub.path = True
-                        q = False
-                        break
-                    # print("Goes to the queue", hub.id, hub.position, end=", ")
-                    q.append(hub)
-        print([h.id for h in visited])
-        
+                # q = deque()
+                # start = self.start_hub
+                # visited = {start}
+                # start.visited = True
+                # q.append(start)
+                # path = []
+                # while q:
+                #     current = q.popleft()
+                #     # s = list(current.neighbour_hubs).sort(key=lambda x: x.max_drones, reverse=True)
+                #     s = sorted(list(current.neighbour_hubs), key=lambda x: x.max_drones, reverse=True)
+                #     # print(s)
+                #     for hub in s:
+                #         # here i need to check for the max cap of hub, their zones and link_cap
+                #         if not hub.visited:
+                #             hub.visited = True
+                #             visited.add(hub)
+                #             if hub.id == "goal":
+                #                 hub.path = True
+                #                 q = False
+                #                 break
+                #             # print("Goes to the queue", hub.id, hub.position, end=", ")
+                #             q.append(hub)
+        # print([h.id for h in visited])
+        all_pathes = []
+        visited = set()
+        visited.add((self.start_hub, 0))
+        current = self.start_hub
+        while current != self.end_hub:
+            for n in current.neighbour_hubs:
+                if n not in visited and n.zone != "BLOCKED":
+                    edge_cost = 2 if n.zone == "RESTRICTED" else 1
+                    visited.add((n, edge_cost))
+
+# start_hub: [n1: 1, n2: 1, n3: 2]
+#   n1: [n1n1: 1, n1n2, 1]
+#   n2: [n2n1: 1, n2n2, 1]
+#       n1n1: [goal: 1]
+#       n1n2: None
+# 
