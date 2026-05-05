@@ -120,15 +120,15 @@ class Map():
         print(normalized)
         to_compare = set()
         for n in normalized:
-            to_compare.add(n)
+            to_compare.add(str(n))
         if len(normalized) != len(to_compare):
             raise Exception("Invalid connections: duplicates found")
 
-    def find_connection(self, hub1: Hub, hub2: Hub) -> int:
+    def find_connection(self, hub1: Hub, hub2: Hub) -> Connection:
         for con in self.connections:
             linked_m = con.linked_members
             if linked_m == (hub1, hub2).sort():
-                return con.link_cap
+                return con
 
     def prepare_4_start(self) -> None:
         for connection in self.connections:
@@ -154,7 +154,7 @@ class Map():
 
         # here Exception could happen. use try block here or on top of this method 
         # current version also do not work
-        # self.validate_connections()
+        self.validate_connections()
 
         # make pathfinding here?
         # self.find_valid_path()

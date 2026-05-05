@@ -11,6 +11,7 @@ def main() -> None:
         with open(sys.argv[1], "r") as f:
             config_data = f.read()
             # print("Config data: ", config_data)
+            print("start part")
             data_4_map = parser.parsing(config_data)
             # print(data_4_map)
             for hub in data_4_map["hubs"]:
@@ -23,23 +24,27 @@ def main() -> None:
             #     connection.setup(my_map.hubs)
                 # print(connection.linked_members)
             my_map.prepare_4_start()
-            graph = my_map.make_graph()
+        # except Exception as e:
+        #     print(str(e))
+        #     exit(1)
+        # else:
+        graph = my_map.make_graph()
 
-            # here is te code to check graph
-            for key, item in graph.items():
-                print(key.id, end=": ")
-                for i in item:
-                    print(i.id, end=", ")
-                print()
-            for hub in my_map.hubs:
-                print(hub.id, hub.zone)
-            ui = GameUI(my_map)
-            ui.run()
-            # print(my_map.nb_drones)
-            # my_map.make_move()
-            # print()
-            # my_map.make_move()
+        # here is te code to check graph
+        for key, item in graph.items():
+            print(key.id, end=": ")
+            for i in item:
+                print(i.id, end=", ")
             print()
+        for hub in my_map.hubs:
+            print(hub.id, hub.zone)
+        ui = GameUI(my_map)
+        ui.run()
+        # print(my_map.nb_drones)
+        # my_map.make_move()
+        # print()
+        # my_map.make_move()
+        print()
             # my_map.make_move()
             # print()
             # my_map.make_move()

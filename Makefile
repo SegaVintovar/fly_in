@@ -11,11 +11,11 @@ install:
 # maps/medium/02_circular_loop.txt	doesn work, prints spaces
 # maps/medium/03_priority_puzzle.txt	works, 7 steps
 # maps/hard/01_maze_nightmare.txt		crash after first move
-# maps/hard/02_capacity_hell.txt		almost all drones arrived, but some got stuck
-# maps/hard/03_ultimate_challenge.txt	
+# maps/hard/02_capacity_hell.txt		almost all drones arrived, but some got stuck, some times it is succeceded
+# maps/hard/03_ultimate_challenge.txt	does 2 moves and then breaks
 # maps/challenger/01_the_impossible_dream.txt
 run:
-	virt_env/bin/python3 main.py maps/hard/02_capacity_hell.txt
+	virt_env/bin/python3 main.py maps/challenger/01_the_impossible_dream.txt
 debug:
 	python3 -m pdb fly_in.py
 clean:
