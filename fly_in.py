@@ -269,10 +269,29 @@ class Map():
                 #             # print("Goes to the queue", hub.id, hub.position, end=", ")
                 #             q.append(hub)
         # print([h.id for h in visited])
+        # here i will add all the pathes that end up on goal
         all_pathes = []
+        current_path: tuple[list[Hub], int]
+        current = self.start_hub
         visited = set()
         visited.add((self.start_hub, 0))
-        current = self.start_hub
+        while True:
+            neighbours = current.neighbour_hubs
+            # this is where i can go
+            # calc how many drones can pass through during a turn
+            # if restricted, 0,5 can path
+            # if link_cap >= max drones that next hub can take, 
+            options = []
+            for n in neighbours:
+                if n.zone in ["NORMAL", "PRIORITY"]:
+                    options.append(
+                        (n, min(self.find_connection(current, n).link_cap,
+                                n.max_drones - len(n.drones)))
+                        )
+                if n.zone == "RESTRICTED":
+                    options.append(n, min(self.find_connection(current, n).link_cap,
+                                n.max_drones - len(n.drones)) * 0.5)
+
         while current != self.end_hub:
             for n in current.neighbour_hubs:
                 if n not in visited and n.zone != "BLOCKED":
@@ -282,6 +301,8 @@ class Map():
                     if n == self.end_hub:
                         break
                     # save it into all pathes as a tuple[list[Hub], cost]
+
+        
 
 # start_hub: [n1: 1, n2: 1, n3: 2]
 #   n1: [n1n1: 1, n1n2, 1]
