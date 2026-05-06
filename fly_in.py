@@ -277,7 +277,11 @@ class Map():
             for n in current.neighbour_hubs:
                 if n not in visited and n.zone != "BLOCKED":
                     edge_cost = 2 if n.zone == "RESTRICTED" else 1
+                    all_pathes.append()
                     visited.add((n, edge_cost))
+                    if n == self.end_hub:
+                        break
+                    # save it into all pathes as a tuple[list[Hub], cost]
 
 # start_hub: [n1: 1, n2: 1, n3: 2]
 #   n1: [n1n1: 1, n1n2, 1]
