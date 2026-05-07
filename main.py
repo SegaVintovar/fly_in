@@ -31,20 +31,35 @@ def main() -> None:
         graph = my_map.make_graph()
 
         # here is te code to check graph
-        for key, item in graph.items():
-            print(key.id, end=": ")
-            for i in item:
-                print(i.id, end=", ")
-            print()
-        for hub in my_map.hubs:
-            print(hub.id, hub.zone)
+        # for key, item in graph.items():
+        #     print(key.id, end=": ")
+        #     for i in item:
+        #         print(i.id, end=", ")
+        #     print()
+        # for hub in my_map.hubs:
+        #     print(hub.id, hub.zone)
+        # for path in my_map.all_pathes:
+        #     hubs, cost = path
+
+        #     print(cost, end=": ")
+        #     for h in hubs:
+        #         print(h.id, end=", ")
+        #     print()
+        
+        # cheapest_cost = 0
+        cheapest_path, cost = min(my_map.all_pathes, key=lambda x: x[1])
+        print("Cost: ", cost)
+        for h in cheapest_path:
+            print(h.id)
         ui = GameUI(my_map)
         ui.run()
+
+
         # print(my_map.nb_drones)
         # my_map.make_move()
         # print()
         # my_map.make_move()
-        print()
+        
             # my_map.make_move()
             # print()
             # my_map.make_move()

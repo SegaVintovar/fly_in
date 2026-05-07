@@ -126,9 +126,11 @@ class Map():
             raise Exception("Invalid connections: duplicates found")
 
     def find_connection(self, hub1: Hub, hub2: Hub) -> Connection:
+        to_find = sorted((hub1.id, hub2.id))
         for con in self.connections:
             linked_m = con.linked_members
-            if linked_m == (hub1, hub2).sort():
+            print([m.id for m in linked_m], len(linked_m))
+            if linked_m == to_find:
                 return con
 
     def prepare_4_start(self) -> None:
@@ -158,7 +160,7 @@ class Map():
         self.validate_connections()
 
         # make pathfinding here?
-        # self.find_valid_path()
+        self.find_valid_path()
         # make path finding and ranking of the hubs
         for hub in self.hubs:
             print(hub.id, hub.max_drones, hub.path, [h.id for h in hub.neighbour_hubs])
@@ -269,40 +271,77 @@ class Map():
                 #             # print("Goes to the queue", hub.id, hub.position, end=", ")
                 #             q.append(hub)
         # print([h.id for h in visited])
-        # here i will add all the pathes that end up on goal
+        # # here i will add all the pathes that end up on goal
+        # all_pathes = []
+        # current_path: tuple[list[Hub], int]
+        # current = self.start_hub
+        # visited = set()
+        # visited.add((self.start_hub, 0))
+        # while True:
+        #     neighbours = current.neighbour_hubs
+        #     # this is where i can go
+        #     # calc how many drones can pass through during a turn
+        #     # if restricted, 0,5 can path
+        #     # if link_cap >= max drones that next hub can take, 
+        #     options = []
+        #     for n in neighbours:
+        #         if n.zone in ["NORMAL", "PRIORITY"]:
+        #             options.append(
+        #                 (n, min(self.find_connection(current, n).link_cap,
+        #                         n.max_drones - len(n.drones)), current)
+        #                 )
+        #         if n.zone == "RESTRICTED":
+        #             options.append(n, min(self.find_connection(current, n).link_cap,
+        #                         n.max_drones - len(n.drones)) * 0.5, current)
+        #         if n.id == "goal":
+        #             break
+        #     options.sort(key=lambda x: x[1], reverse=True)
+        #     print(options)
+        #     current = options.pop()
+        #     visited.add(current)
+        #     print(current[0].id)
+
+
+
+        # while current != self.end_hub:
+        #     for n in current.neighbour_hubs:
+        #         if n not in visited and n.zone != "BLOCKED":
+        #             edge_cost = 2 if n.zone == "RESTRICTED" else 1
+        #             all_pathes.append()
+        #             visited.add((n, edge_cost))
+        #             if n == self.end_hub:
+        #                 break
+        #             # save it into all pathes as a tuple[list[Hub], cost]
         all_pathes = []
-        current_path: tuple[list[Hub], int]
-        current = self.start_hub
-        visited = set()
-        visited.add((self.start_hub, 0))
-        while True:
-            neighbours = current.neighbour_hubs
-            # this is where i can go
-            # calc how many drones can pass through during a turn
-            # if restricted, 0,5 can path
-            # if link_cap >= max drones that next hub can take, 
-            options = []
-            for n in neighbours:
-                if n.zone in ["NORMAL", "PRIORITY"]:
-                    options.append(
-                        (n, min(self.find_connection(current, n).link_cap,
-                                n.max_drones - len(n.drones)))
-                        )
-                if n.zone == "RESTRICTED":
-                    options.append(n, min(self.find_connection(current, n).link_cap,
-                                n.max_drones - len(n.drones)) * 0.5)
+        # stack elment is a tuple with current hub, path(list of hubs that led me here) 
+        # cost and set of visited hubs
+        start = self.start_hub
+        stack = [(start, [start], 0, {start})]
 
-        while current != self.end_hub:
+        while stack:
+            current, path, cost, visited = stack.pop()
+            if current is self.end_hub:
+                all_pathes.append((path, cost))
+                continue
+            
             for n in current.neighbour_hubs:
-                if n not in visited and n.zone != "BLOCKED":
-                    edge_cost = 2 if n.zone == "RESTRICTED" else 1
-                    all_pathes.append()
-                    visited.add((n, edge_cost))
-                    if n == self.end_hub:
-                        break
-                    # save it into all pathes as a tuple[list[Hub], cost]
+                if n.zone == "BLOCKED":
+                    continue
+                if n in visited:
+                    continue
 
-        
+                step_cost = 2 if n.zone == "RESTRICTED" else 1
+                new_path = path + [n]
+                new_visted = visited | {n}
+                stack.append((
+                    n,
+                    new_path,
+                    cost + step_cost,
+                    new_visted
+                ))
+
+
+        self.all_pathes = all_pathes
 
 # start_hub: [n1: 1, n2: 1, n3: 2]
 #   n1: [n1n1: 1, n1n2, 1]
