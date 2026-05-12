@@ -28,3 +28,23 @@ def rank_hubs_by_distance(self):
 at this point i need smth that marks all possible pathes
 to multiply self.rank_hubs() by is_Path which is 0 or 1
 
+
+all colors
+
+green
+blue
+red
+purple
+black
+brown
+orange
+maroon
+gold
+darkred
+violet
+crimson
+rainbow
+yellow
+cyan
+lime
+magenta

@@ -1,4 +1,7 @@
-from fly_in import Hub
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from fly_in import Hub
 
 
 class Drone():
@@ -7,15 +10,10 @@ class Drone():
         self.location = location
         self.visited_hubs = set()
         self.on_the_way = False
-        
-    
-    def move_to(self, current_hub: Hub, next_hub: Hub) -> None:
+
+    def move_to(self, current_hub: "Hub", next_hub: "Hub") -> None:
         self.location = next_hub.position
         next_hub.drones.append(self)
         self.visited_hubs.add(current_hub)
-        i += 1
-        print(
-            self.id,
-            "->",
-            next_hub.id,
-            end=", ")
+        # i += 1
+        print(self.id, "->", next_hub.id, end=", ")

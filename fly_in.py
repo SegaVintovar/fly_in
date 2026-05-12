@@ -1,7 +1,7 @@
 from enum import Enum
 from drone import Drone
 from collections import deque
-from typing import Set
+from typing import Set, TYPE_CHECKING
 
 
 class Zone(Enum):
@@ -9,7 +9,6 @@ class Zone(Enum):
     BLOCKED = 1000
     NORMAL = 1
     PRIORITY = 1
-
 
 
 
@@ -30,7 +29,7 @@ class Hub():
         self.path = False
         self.visited = False
         self.rank = 0
-        self.waiting_drones: list[Drone] = []
+        self.waiting_drones: list[tuple[Drone, Hub]] = []
 
     class HubValidationError(Exception):
         def __init__(self, message: str):
@@ -177,7 +176,7 @@ class Map():
         # for hub in self.hubs:
         #     print(hub.id, hub.max_drones, hub.path, [h.id for h in hub.neighbour_hubs])
         print("end of preparation")
-        
+ 
     def make_move(self) -> bool:
         # loop through hubs starting from the end
             # loop through drons at the hub and check if they can go further
@@ -187,22 +186,39 @@ class Map():
             # the nearest to the goal
             # sort hubs by their rank - rank has to represent
             # how close they are to the finish
-            # sorted by rank and rank is distance from the goal multipliyed by in path(1 or 0)
+
+            # there should be two different scenarios
+            # if current hub has waiting drones
+            #       move them and then check to_visit
+            # then do standart stuff:
+            #       which is
 
             while hubs_with_drones:
                 hub = hubs_with_drones.pop()
-                
+
                 i = 0
 
-                to_visit = [
-                    h for h in hub.neighbour_hubs
-                    if len(h.drones) < h.max_drones
-                    and h.zone in ["NORMAL", "PRIORITY", "RESTRICTED"]
-                    and h.rank > 0
-                    ]
+                # to_visit = [
+                #     h for h in hub.neighbour_hubs
+                #     if len(h.drones) < h.max_drones
+                #     and h.zone in ["NORMAL", "PRIORITY", "RESTRICTED"]
+                #     and h.rank > 0
+                #     ]
+                to_visit = [h for h in hub.neighbour_hubs if h.rank > hub.rank]
 
-                to_visit.sort(key=lambda x: x.rank)
-                to_visit = [h for h in to_visit if hub.rank < h.rank]
+                # to_visit.sort(key=lambda x: x.rank)
+                # to_visit = [h for h in to_visit if hub.rank < h.rank]
+                while hub.waiting_drones:
+                    drone, next_hub = hub.waiting_drones.pop()
+                    if (
+                        i < self.find_connection(hub, next_hub).link_cap
+                        and i < (next_hub.max_drones -
+                                 (len(next_hub.drones) +
+                                  len(next_hub.waiting_drones)))
+                                  ):
+                        drone.move_to(hub, next_hub)
+                        i += 1
+
                 while hub.drones and to_visit:
 
                     if len(to_visit) > 0:
@@ -214,20 +230,23 @@ class Map():
                         i = min([
                                 self.find_connection(hub, next_hub).link_cap,
                                 next_hub.max_drones - len(next_hub.drones)
-                            ])
+                                ])
                         drones: list[Drone] = []
                         if next_hub.zone == "RESTRICTED":
+                            # print("we are in restricted")
                             if hub.waiting_drones:
-                                drones.append(hub.waiting_drones.pop())
+                                drones.append(hub.waiting_drones.pop()[0])
                             # or take drone from waiting list
                             # or put drone there and go to the next hub
                             else:
-                                hub.waiting_drones.append(hub.drones.pop())
+                                d = hub.drones.pop()
+                                print(f"{d.id} stays in {hub.id}")
+                                hub.waiting_drones.append(
+                                    (d, next_hub))
                         else:
                             while i:
                                 drones.append(hub.drones.pop())
                                 i -= 1
-                        
 
                         for drone in drones:
                             if next_hub not in drone.visited_hubs:
@@ -238,19 +257,11 @@ class Map():
                                 to_visit.append(tmp)
                             
                             drone.move_to(hub, next_hub)
-                            # make Drone method
-                            # # def move_to(self, next_hub: Hub) -> None:
-                            # drone.location = next_hub.position
-                            # next_hub.drones.append(drone)
-                            # drone.visited_hubs.add(hub)
-                            # i += 1
-                            # print(
-                            #     drone.id,
-                            #     "->",
-                            #     next_hub.id,
-                            #     end=", ")
-                        
-                        if next_hub.max_drones > len(next_hub.drones):
+                            i += 1
+
+                        if next_hub.max_drones > (len(next_hub.drones) +
+                                                  len(next_hub.waiting_drones)
+                                                  ):
                             to_visit.append(next_hub)
                         else:
                             break
@@ -259,23 +270,18 @@ class Map():
 
         hubs_with_drones: list[Hub] = []
         for hub in self.hubs:
-            if len(hub.drones) > 0 and "goal" not in hub.id:
+            if ((len(hub.drones) > 0 or len(hub.waiting_drones) > 0)
+                    and "goal" not in hub.id):
                 hubs_with_drones.append(hub)
-                # print(hub.id)
-        # print(len(hubs_with_drones))
-        # sort these hubs by the rank
+
         hubs_with_drones = sorted(
             hubs_with_drones, key=lambda x: x.rank)
         if len(hubs_with_drones) > 0:
-            # print("before move to next")
             move_to_next(hubs_with_drones)
             return True
         else:
             print("All drones has arrived to the goal")
             return False
-            # exit(0)
-        # print()
-
 
     def make_graph(self):
         return {hub: hub.neighbour_hubs for hub in self.hubs}

@@ -13,7 +13,7 @@ class GameUI:
     def __init__(self, my_map: Map):
         pygame.init()
         self.my_map = my_map
-        self.screen = pygame.display.set_mode((1500, 1200))
+        self.screen = pygame.display.set_mode((2500, 1200))
         pygame.display.set_caption("Fly In")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 24)
@@ -59,7 +59,8 @@ class GameUI:
             self.screen.blit(label, (pos[0] + 15, pos[1] - 10))
 
             # Draw drones on top of the hub
-            for i, drone in enumerate(hub.drones):
+            for i, drone in enumerate(
+                    hub.drones + [h[0] for h in hub.waiting_drones]):
                 pygame.draw.circle(self.screen,
                                    BLUE,
                                    (pos[0], pos[1] + 25 + i * 15),
@@ -89,7 +90,7 @@ class GameUI:
                 print()
                 self.last_step = now
 
-            self.draw(i)
+            self.draw(i - 1)
             self.clock.tick(160)
 
         print("Total moves: ", i - 1)
