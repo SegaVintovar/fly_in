@@ -48,10 +48,13 @@ def main() -> None:
         
         # cheapest_cost = 0
         cheapest_path, cost = min(my_map.all_pathes, key=lambda x: x[1])
-        print("Cost: ", cost)
-        for h in cheapest_path:
-            print(h.id)
+        # print("Cost: ", cost)
+        # for h in cheapest_path:
+        #     print(h.id)
         ui = GameUI(my_map)
+        for h in my_map.hubs:
+            print(h.id, h.rank, end=", ")
+        print()
         ui.run()
 
 

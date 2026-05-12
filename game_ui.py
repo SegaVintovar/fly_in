@@ -13,7 +13,7 @@ class GameUI:
     def __init__(self, my_map: Map):
         pygame.init()
         self.my_map = my_map
-        self.screen = pygame.display.set_mode((1800, 1200))
+        self.screen = pygame.display.set_mode((1500, 1200))
         pygame.display.set_caption("Fly In")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 24)
@@ -31,15 +31,17 @@ class GameUI:
 
         def convert(pos):
             x, y = pos
-            sx = 60 + (x - min_x) * 120
-            sy = 60 + (y - min_y) * 120
+            sx = 60 + (x - min_x) * 100
+            sy = 60 + (y - min_y) * 100
             return sx, sy
 
         return {hub.id: convert(hub.position) for hub in self.my_map.hubs}
 
-    def draw(self):
+    def draw(self, i: int):
         self.screen.fill(WHITE)
 
+        move_heading = self.font.render(f"Move number {i}", True, BLACK)
+        self.screen.blit(move_heading, (0, 0))
         # Draw connections first
         for connection in self.my_map.connections:
             a, b = connection.linked_members
@@ -71,22 +73,25 @@ class GameUI:
 
     def run(self):
         running = True
-        try:
-            while running:
+        i = 0
+        while running:
 
-                now = pygame.time.get_ticks()
+            now = pygame.time.get_ticks()
 
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        running = False
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
 
-                # Advance simulation on a timer
-                if now - self.last_step >= self.step_delay_ms:
-                    running = self.my_map.make_move()
-                    print()
-                    self.last_step = now
-                self.draw()
-                self.clock.tick(160)
-        finally:
-            pygame.quit()
-            sys.exit()
+            # Advance simulation on a timer
+            if now - self.last_step >= self.step_delay_ms:
+                running = self.my_map.make_move()
+                i += 1
+                print()
+                self.last_step = now
+
+            self.draw(i)
+            self.clock.tick(160)
+
+        print("Total moves: ", i - 1)
+        pygame.quit()
+        sys.exit()

@@ -1,0 +1,15 @@
+# Easy Level 1: Simple linear path + restricted hub on the way
+nb_drones: 5
+
+start_hub: start 0 0 [color=green max_drones=5]
+hub: waypoint1 1 0 [color=blue max_drones=5]
+hub: waypoint2 2 0 [color=blue max_drones=5]
+hub: waypoint3 3 0 [color=blue max_drones=5]
+end_hub: goal 4 0 [color=red max_drones=5]
+
+connection: start-waypoint1
+connection: waypoint1-waypoint2
+connection: waypoint2-waypoint3
+connection: waypoint3-goal
+
+# zone=restricted

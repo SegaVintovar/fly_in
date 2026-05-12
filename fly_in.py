@@ -1,8 +1,8 @@
 from enum import Enum
+from drone import Drone
 from collections import deque
 from typing import Set
 
-global COUNT
 
 class Zone(Enum):
     RESTRICTED = 2
@@ -11,12 +11,7 @@ class Zone(Enum):
     PRIORITY = 1
 
 
-class Drone():
-    def __init__(self, id: str, location: tuple[int, int]):
-        self.id = id
-        self.location = location
-        self.visited_hubs = set()
-        self.on_the_way = False
+
 
 
 class Hub():
@@ -34,6 +29,8 @@ class Hub():
         self.meta: str | None = None
         self.path = False
         self.visited = False
+        self.rank = 0
+        self.waiting_drones: list[Drone] = []
 
     class HubValidationError(Exception):
         def __init__(self, message: str):
@@ -118,7 +115,7 @@ class Map():
 
     def validate_connections(self) -> None:
         normalized = sorted([member.connection for member in self.connections])
-        print(normalized)
+        # print(normalized)
         to_compare = set()
         for n in normalized:
             to_compare.add(str(n))
@@ -126,12 +123,25 @@ class Map():
             raise Exception("Invalid connections: duplicates found")
 
     def find_connection(self, hub1: Hub, hub2: Hub) -> Connection:
-        to_find = sorted((hub1.id, hub2.id))
+        # print("find connection")
+        to_find = sorted((hub1.id, hub2.id), reverse=True)
         for con in self.connections:
-            linked_m = con.linked_members
-            print([m.id for m in linked_m], len(linked_m))
+            
+            linked_m = sorted(con.connection, reverse=True)
+            # print(linked_m, con.linked_members)
+
+            # print([m for m in linked_m], len(linked_m), " and ",
+            #       [l for l in to_find], len(to_find))
             if linked_m == to_find:
                 return con
+
+    # only cheapest path taken into account
+    def rank_hubs(self) -> None:
+        cheapest_path, cost = min(self.all_pathes, key=lambda x: x[1])
+        i = 0
+        for h in cheapest_path:
+            h.rank = 100 // cost + i
+            i += 1
 
     def prepare_4_start(self) -> None:
         for connection in self.connections:
@@ -156,14 +166,17 @@ class Map():
             i += 1
 
         # here Exception could happen. use try block here or on top of this method 
-        # current version also do not work
         self.validate_connections()
 
         # make pathfinding here?
         self.find_valid_path()
+        if len(self.all_pathes) == 0:
+            raise Exception("There is no path from start to goal")
+        self.rank_hubs()
         # make path finding and ranking of the hubs
-        for hub in self.hubs:
-            print(hub.id, hub.max_drones, hub.path, [h.id for h in hub.neighbour_hubs])
+        # for hub in self.hubs:
+        #     print(hub.id, hub.max_drones, hub.path, [h.id for h in hub.neighbour_hubs])
+        print("end of preparation")
         
     def make_move(self) -> bool:
         # loop through hubs starting from the end
@@ -178,59 +191,81 @@ class Map():
 
             while hubs_with_drones:
                 hub = hubs_with_drones.pop()
-                # here 
-                # print(hub.id)
+                
+                i = 0
+
                 to_visit = [
                     h for h in hub.neighbour_hubs
                     if len(h.drones) < h.max_drones
-                    and h.zone in ["NORMAL", "PRIORITY"]
-                    # and len(h.neighbour_hubs) > 1
+                    and h.zone in ["NORMAL", "PRIORITY", "RESTRICTED"]
+                    and h.rank > 0
                     ]
-                second_option = [
-                    h for h in hub.neighbour_hubs
-                    if len(h.drones) < h.max_drones
-                    and h.zone == "RESTRICTED"
-                ]
-                i = 0
-                # check link cap here
 
-                while to_visit and hub.drones:
-                    next_hub = to_visit.pop()
-                    # if self.end_hub in next_hub.neighbour_hubs:
-                    # here goes link cap check
-                    # if self.find_connection(hub, next_hub) <= i:
-                    #     to_visit.remove(next_hub)
-                    #     break
-                    if len(next_hub.neighbour_hubs) < 2 and next_hub.id != "goal":
-                        continue
-                    drone = hub.drones.pop()
-                    if next_hub not in drone.visited_hubs:
-                        drone.visited_hubs.add(next_hub)
-                    else:
-                        tmp = next_hub
+                to_visit.sort(key=lambda x: x.rank)
+                to_visit = [h for h in to_visit if hub.rank < h.rank]
+                while hub.drones and to_visit:
+
+                    if len(to_visit) > 0:
                         next_hub = to_visit.pop()
-                        to_visit.append(tmp)
-                    drone.location = next_hub.position
-                    next_hub.drones.append(drone)
-                    drone.visited_hubs.add(hub)
-                    i += 1
-                    print(
-                        drone.id,
-                        " flew to the ",
-                        next_hub.id,
-                        end=", ")
-                    if next_hub.max_drones > len(next_hub.drones):
-                        to_visit.append(next_hub)
+
+                        # amount of drones that can fly to the next hub
+                        # based on the minimum value between link cap
+                        # and avaliable spots in the next hub
+                        i = min([
+                                self.find_connection(hub, next_hub).link_cap,
+                                next_hub.max_drones - len(next_hub.drones)
+                            ])
+                        drones: list[Drone] = []
+                        if next_hub.zone == "RESTRICTED":
+                            if hub.waiting_drones:
+                                drones.append(hub.waiting_drones.pop())
+                            # or take drone from waiting list
+                            # or put drone there and go to the next hub
+                            else:
+                                hub.waiting_drones.append(hub.drones.pop())
+                        else:
+                            while i:
+                                drones.append(hub.drones.pop())
+                                i -= 1
+                        
+
+                        for drone in drones:
+                            if next_hub not in drone.visited_hubs:
+                                drone.visited_hubs.add(next_hub)
+                            else:
+                                tmp = next_hub
+                                next_hub = to_visit.pop()
+                                to_visit.append(tmp)
+                            
+                            drone.move_to(hub, next_hub)
+                            # make Drone method
+                            # # def move_to(self, next_hub: Hub) -> None:
+                            # drone.location = next_hub.position
+                            # next_hub.drones.append(drone)
+                            # drone.visited_hubs.add(hub)
+                            # i += 1
+                            # print(
+                            #     drone.id,
+                            #     "->",
+                            #     next_hub.id,
+                            #     end=", ")
+                        
+                        if next_hub.max_drones > len(next_hub.drones):
+                            to_visit.append(next_hub)
+                        else:
+                            break
                     else:
                         break
 
         hubs_with_drones: list[Hub] = []
         for hub in self.hubs:
-            if len(hub.drones) > 0 and hub.id != "goal":
+            if len(hub.drones) > 0 and "goal" not in hub.id:
                 hubs_with_drones.append(hub)
                 # print(hub.id)
         # print(len(hubs_with_drones))
         # sort these hubs by the rank
+        hubs_with_drones = sorted(
+            hubs_with_drones, key=lambda x: x.rank)
         if len(hubs_with_drones) > 0:
             # print("before move to next")
             move_to_next(hubs_with_drones)
@@ -239,79 +274,13 @@ class Map():
             print("All drones has arrived to the goal")
             return False
             # exit(0)
-        print()
+        # print()
 
 
     def make_graph(self):
         return {hub: hub.neighbour_hubs for hub in self.hubs}
 
     def find_valid_path(self) -> None:
-        # use BFS to find all possible ways to the finish and use them for
-        # self.make_move()
-                # q = deque()
-                # start = self.start_hub
-                # visited = {start}
-                # start.visited = True
-                # q.append(start)
-                # path = []
-                # while q:
-                #     current = q.popleft()
-                #     # s = list(current.neighbour_hubs).sort(key=lambda x: x.max_drones, reverse=True)
-                #     s = sorted(list(current.neighbour_hubs), key=lambda x: x.max_drones, reverse=True)
-                #     # print(s)
-                #     for hub in s:
-                #         # here i need to check for the max cap of hub, their zones and link_cap
-                #         if not hub.visited:
-                #             hub.visited = True
-                #             visited.add(hub)
-                #             if hub.id == "goal":
-                #                 hub.path = True
-                #                 q = False
-                #                 break
-                #             # print("Goes to the queue", hub.id, hub.position, end=", ")
-                #             q.append(hub)
-        # print([h.id for h in visited])
-        # # here i will add all the pathes that end up on goal
-        # all_pathes = []
-        # current_path: tuple[list[Hub], int]
-        # current = self.start_hub
-        # visited = set()
-        # visited.add((self.start_hub, 0))
-        # while True:
-        #     neighbours = current.neighbour_hubs
-        #     # this is where i can go
-        #     # calc how many drones can pass through during a turn
-        #     # if restricted, 0,5 can path
-        #     # if link_cap >= max drones that next hub can take, 
-        #     options = []
-        #     for n in neighbours:
-        #         if n.zone in ["NORMAL", "PRIORITY"]:
-        #             options.append(
-        #                 (n, min(self.find_connection(current, n).link_cap,
-        #                         n.max_drones - len(n.drones)), current)
-        #                 )
-        #         if n.zone == "RESTRICTED":
-        #             options.append(n, min(self.find_connection(current, n).link_cap,
-        #                         n.max_drones - len(n.drones)) * 0.5, current)
-        #         if n.id == "goal":
-        #             break
-        #     options.sort(key=lambda x: x[1], reverse=True)
-        #     print(options)
-        #     current = options.pop()
-        #     visited.add(current)
-        #     print(current[0].id)
-
-
-
-        # while current != self.end_hub:
-        #     for n in current.neighbour_hubs:
-        #         if n not in visited and n.zone != "BLOCKED":
-        #             edge_cost = 2 if n.zone == "RESTRICTED" else 1
-        #             all_pathes.append()
-        #             visited.add((n, edge_cost))
-        #             if n == self.end_hub:
-        #                 break
-        #             # save it into all pathes as a tuple[list[Hub], cost]
         all_pathes = []
         # stack elment is a tuple with current hub, path(list of hubs that led me here) 
         # cost and set of visited hubs
@@ -340,12 +309,4 @@ class Map():
                     new_visted
                 ))
 
-
         self.all_pathes = all_pathes
-
-# start_hub: [n1: 1, n2: 1, n3: 2]
-#   n1: [n1n1: 1, n1n2, 1]
-#   n2: [n2n1: 1, n2n2, 1]
-#       n1n1: [goal: 1]
-#       n1n2: None
-# 
