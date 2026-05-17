@@ -17,10 +17,12 @@ install:
 run:
 	virt_env/bin/python3 start_menu.py
 debug:
-	python3 -m pdb fly_in.py
+	python3 -m pdb start_menu.py
 clean:
 	rm -rf /__pycahce__
+	rm -rf /mypy_cache
 lint:
-	flake8 . and mypy . --warn-return-any \
+	flake8 . --exclude=virt_env,.vscode,maps,__pycache__ &
+	mypy . --warn-return-any \
 	--warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs \
 	--check-untyped-defs

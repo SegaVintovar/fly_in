@@ -19,10 +19,5 @@ class Drone():
         # there exception is comming
         c = getattr(Color, next_hub.color.upper())
         # i += 1
-        print(
-            self.id,
-            "->",
-            c,
-            next_hub.id,
-            Color.Style.RESET_ALL,
-            end=", ")
+        print(f"{self.id}-{c}{next_hub.id}{Color.Style.RESET_ALL}",
+              end=", ")

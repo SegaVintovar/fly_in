@@ -1,20 +1,23 @@
 # from pydantic import BaseModel, Field
-from fly_in import Hub, Drone, Connection
+from fly_in import Hub, Connection
 import sys
 
 
 class ParsingError(Exception):
     def __init__(self, message: str):
-        super.__init__(message)
+        self.message = message
 
 
 # BaseModel ?
 class Parsing():
+    """
+    Parsing class is made to be used for flyin maps parsing
+    """
     # @staticmethod
     def parsing(self, input: str) -> dict:
-        '''
+        """
         Returns dict with keys "nb_drones", "hubs", "connections"
-        '''
+        """
         lines = input.split("\n")
         tmp_result: dict = {}
         i = 0
@@ -51,33 +54,31 @@ class Parsing():
                     if tmp > 0:
                         result["nb_drones"] = tmp
                     else:
-                        raise ValueError("There has to be more then zero drones")
+                        raise ValueError(
+                            "There has to be more then zero drones")
                 except ValueError as e:
                     print(str(e))
                     exit(1)
 
         tmp = result
-        result["hubs"] = self.parse_hubs(tmp["hubs"])
-        result["connections"] = self.parse_connections(tmp["connections"])
+        result["hubs"] = self._parse_hubs(tmp["hubs"])
+        result["connections"] = self._parse_connections(tmp["connections"])
 
         return result
 
-    def meta_parser(meta_data_str: str) -> dict:
-        ...
-
-    def parse_hubs(self, data: list[str]) -> list:
+    def _parse_hubs(self, data: list[str]) -> list:
         result: list[Hub] = []
         for entry in data:
             result.append(Hub((entry)))
 
         return result
 
-    def parse_connections(self, data: list[tuple[str, str]]) -> list:
+    def _parse_connections(self, data: list[tuple[str, str]]) -> list:
         result: list[Connection] = []
         # print(data)
         for entry in data:
             tmp = entry.split()
-            name = tmp[0]
+            # name = tmp[0]
             if len(tmp) > 1:
                 result.append(Connection(
                     (tmp[0].split("-")[0], tmp[0].split("-")[1]), tmp[1]))

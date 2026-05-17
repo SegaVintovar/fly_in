@@ -43,8 +43,8 @@ class GameUI:
         # Simple scaling from map coordinates to screen coordinates
         xs = [hub.position[0] for hub in self.my_map.hubs]
         ys = [hub.position[1] for hub in self.my_map.hubs]
-        min_x, max_x = min(xs), max(xs)
-        min_y, max_y = min(ys), max(ys)
+        min_x, _ = min(xs), max(xs)
+        min_y, _ = min(ys), max(ys)
 
         def convert(pos):
             x, y = pos
@@ -52,7 +52,11 @@ class GameUI:
             sy = 60 + (y - min_y) * 100
             return sx, sy
         # tuple(map(operator.add, hub.position, self.cam_pos))
-        return {hub.id: convert(tuple(map(operator.add, list(hub.position), self.cam_pos))) for hub in self.my_map.hubs}
+        return {
+            hub.id: convert(
+                tuple(map(operator.add, list(hub.position),
+                          self.cam_pos))) for hub in self.my_map.hubs
+                }
 
     def draw(self, i: int):
         self.screen.fill(WHITE)
@@ -63,15 +67,19 @@ class GameUI:
         for connection in self.my_map.connections:
             a, b = connection.linked_members
             if a and b:
-                pygame.draw.line(self.screen, BLACK, self.points[a.id], self.points[b.id], 2)
-                # to_print = self.font.render((str(connection.link_cap) + " " + connection.connection), True, BLACK)
-                # self.screen.blit(to_print, (pos[0] + 15, pos[1] - 10))
+                pygame.draw.line(
+                    self.screen,
+                    BLACK,
+                    self.points[a.id],
+                    self.points[b.id],
+                    2)
 
         # Draw hubs
         for hub in self.my_map.hubs:
             pos = self.points[hub.id]
-            color = RED if hub == self.my_map.start_hub else BLUE if hub == self.my_map.end_hub else BLACK
-            
+            color = RED if hub == self.my_map.start_hub\
+                else BLUE if hub == self.my_map.end_hub else BLACK
+
             pygame.draw.circle(self.screen, color, pos, 15)
             label = self.font.render(hub.id, True, BLACK)
             self.screen.blit(label, (pos[0] + 15, pos[1] + 15))

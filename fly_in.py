@@ -1,21 +1,31 @@
-from enum import Enum
+# from enum import Enum
 from drone import Drone
-from collections import deque
-from typing import Set, TYPE_CHECKING
+# from collections import deque
+from typing import Set  # TYPE_CHECKING
 import sys
+# class Zone(Enum):
+#     RESTRICTED = 2
+#     BLOCKED = 1000
+#     NORMAL = 1
+#     PRIORITY = 1
 
-class Zone(Enum):
-    RESTRICTED = 2
-    BLOCKED = 1000
-    NORMAL = 1
-    PRIORITY = 1
 
 class HubValidationError(Exception):
+    """
+    Execption to separate general exceptions from Hub validation errors
+    """
     def __init__(self, message: str):
         self.message = message
 
 
 class Hub():
+    """
+    Represent a map hub with capacity, zone, color, and neighbor links.
+
+    A hub is parsed from one hub definition line and then validated in two
+    stages: core fields with validate_input and optional metadata with
+    validate_meta.
+    """
     def __init__(self, input: str
                  ):
         self.input = input
@@ -69,25 +79,33 @@ class Hub():
                         key, value = kw
                     if key == "max_drones":
                         # it has to be positive number
-                        tmp = int(value)
-                        if tmp < 0:
-                            raise HubValidationError(
-                                "max_drones has to be positive int"
-                            )
-                        else:
-                            self.max_drones = tmp
+                        try:
+                            tmp = int(value)
+                            if tmp < 0:
+                                raise HubValidationError(
+                                    "max_drones has to be positive int"
+                                )
+                            else:
+                                self.max_drones = tmp
+                        except ValueError as e:
+                            print(str(e), file=sys.stderr)
+                            exit(1)
+                        except HubValidationError as e:
+                            print(str(e), file=sys.stderr)
+                            exit(1)
                     elif key == "color":
                         c = value.strip().upper()
                         if c in [
-                            "BLACK", "RED",
-                            "GREEN", "YELLOW",
-                            "BLUE", "MAGENTA",
-                            "CYAN", "WHITE",
-                            "PURPLE", "BROWN",
-                            'ORANGE', "MAROON",
-                            "GOLD", "DARKRED",
-                            "VIOLET", "CRIMSON",
-                            "LIME", "RAINBOW" ]:
+                                "BLACK", "RED",
+                                "GREEN", "YELLOW",
+                                "BLUE", "MAGENTA",
+                                "CYAN", "WHITE",
+                                "PURPLE", "BROWN",
+                                'ORANGE', "MAROON",
+                                "GOLD", "DARKRED",
+                                "VIOLET", "CRIMSON",
+                                "LIME", "RAINBOW"
+                                ]:
                             self.color = c
                         else:
                             raise HubValidationError(
@@ -96,7 +114,7 @@ class Hub():
                     elif key == "zone":
                         z = value.upper()
                         if z in [
-                            "NORMAL", "BLOCKED", "PRIORITY", "RESTRICTED"]:
+                                "NORMAL", "BLOCKED", "PRIORITY", "RESTRICTED"]:
                             self.zone = value.upper()
                         else:
                             raise HubValidationError(
@@ -112,6 +130,7 @@ class Hub():
                 print(str(e))
                 exit(1)
 
+
 class Connection():
     def __init__(self, connection: tuple[str, str], meta: str | None = None):
         self.connection = sorted(connection)
@@ -121,8 +140,9 @@ class Connection():
 
     def setup(self, hubs: list[Hub]) -> None:
         # print(self.linked_members)
-        one_hub: Hub
-        two_hub: Hub
+        one_hub: Hub | None = None
+        two_hub: Hub | None = None
+        # what if there is no hub?
         for hub in hubs:
             if hub.id == self.connection[1]:
                 one_hub = hub
@@ -172,7 +192,7 @@ class Map():
         # print("find connection")
         to_find = sorted((hub1.id, hub2.id), reverse=True)
         for con in self.connections:
-            
+
             linked_m = sorted(con.connection, reverse=True)
             # print(linked_m, con.linked_members)
 
@@ -211,7 +231,8 @@ class Map():
 
         if self.start_hub.max_drones > self.end_hub.max_drones:
             print(
-                "Dornes cannot do this trip because of endhub capacity",
+                "Drones cannot do this trip because of the",
+                f"{self.end_hub.id} capacity",
                 file=sys.stderr
                 )
             exit(1)
@@ -224,28 +245,29 @@ class Map():
             i += 1
 
         if self.nb_drones > self.start_hub.max_drones:
-            print("Because of insufficient start_ hub capacity," \
-            "not all the drones were deployed")
+            print("Because of insufficient start_ hub capacity,",
+                  "not all the drones were deployed")
 
-        # here Exception could happen. use try block here or on top of this method 
+        # here Exception could happen.
+        # use try block here or on top of this method
         self.validate_connections()
 
         # make pathfinding here?
         self.find_valid_path()
         if len(self.all_pathes) == 0:
             raise Exception("There is no path from start to goal")
-        
 
         self.rank_hubs()
         # make path finding and ranking of the hubs
         # for hub in self.hubs:
-        #     print(hub.id, hub.max_drones, hub.path, [h.id for h in hub.neighbour_hubs])
+        #     print(hub.id, hub.max_drones, hub.path,
+        #           [h.id for h in hub.neighbour_hubs])
         print("end of preparation")
- 
+
     def make_move(self) -> bool:
         # loop through hubs starting from the end
-            # loop through drons at the hub and check if they can go further
-                # if yes
+        # loop through drons at the hub and check if they can go further
+        # if yes
         def move_to_next(hubs_with_drones: list[Hub]):
             # I need to use start from the hubs that are
             # the nearest to the goal
@@ -313,7 +335,8 @@ class Map():
                             # or put drone there and go to the next hub
                             else:
                                 d = hub.drones.pop()
-                                # stays in connection self.find_connection(hub, next_hub)
+                                # stays in connection
+                                # self.find_connection(hub, next_hub)
                                 print(f"{d.id} stays in {hub.id}", end=", ")
                                 hub.waiting_drones.append(
                                     (d, next_hub))
@@ -329,7 +352,7 @@ class Map():
                                 tmp = next_hub
                                 next_hub = to_visit.pop()
                                 to_visit.append(tmp)
-                            
+
                             drone.move_to(hub, next_hub)
                             i += 1
 
@@ -362,7 +385,8 @@ class Map():
 
     def find_valid_path(self) -> None:
         all_pathes = []
-        # stack elment is a tuple with current hub, path(list of hubs that led me here) 
+        # stack elment is a tuple with current hub,
+        # path(list of hubs that led me here)
         # cost and set of visited hubs
         start = self.start_hub
         stack = [(start, [start], 0, {start})]
@@ -372,7 +396,7 @@ class Map():
             if current is self.end_hub:
                 all_pathes.append((path, cost))
                 continue
-            
+
             for n in current.neighbour_hubs:
                 if n.zone == "BLOCKED":
                     continue
