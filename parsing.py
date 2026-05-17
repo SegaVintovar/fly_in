@@ -1,5 +1,6 @@
 # from pydantic import BaseModel, Field
 from fly_in import Hub, Drone, Connection
+import sys
 
 
 class ParsingError(Exception):
@@ -18,13 +19,15 @@ class Parsing():
         tmp_result: dict = {}
         i = 0
         for row in lines:
+            row = row.strip()
             if row == "" or row.startswith("#"):
                 continue
             else:
                 entry = row.split(": ")
                 if i == 0 and entry[0] != "nb_drones":
-                    raise ParsingError(
-                        "First line has to be nb_drones: <positive int>")
+                    print("First line has to be nb_drones: <positive int>",
+                          file=sys.stderr)
+                    sys.exit(1)
                 # tmp_result[f"{i} " + entry[0]] = entry[1]
                 tmp_result[i] = (entry[0], entry[1])
                 i += 1
@@ -44,9 +47,14 @@ class Parsing():
                 continue
             if "nb_drones" in key:
                 try:
-                    result["nb_drones"] = int(value)
-                except ValueError:
-                    raise "Parsing error: nb_drones value has to be int"
+                    tmp = int(value)
+                    if tmp > 0:
+                        result["nb_drones"] = tmp
+                    else:
+                        raise ValueError("There has to be more then zero drones")
+                except ValueError as e:
+                    print(str(e))
+                    exit(1)
 
         tmp = result
         result["hubs"] = self.parse_hubs(tmp["hubs"])
@@ -69,6 +77,7 @@ class Parsing():
         # print(data)
         for entry in data:
             tmp = entry.split()
+            name = tmp[0]
             if len(tmp) > 1:
                 result.append(Connection(
                     (tmp[0].split("-")[0], tmp[0].split("-")[1]), tmp[1]))

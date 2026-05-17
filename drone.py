@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from color import Color
 
 if TYPE_CHECKING:
     from fly_in import Hub
@@ -15,5 +16,13 @@ class Drone():
         self.location = next_hub.position
         next_hub.drones.append(self)
         self.visited_hubs.add(current_hub)
+        # there exception is comming
+        c = getattr(Color, next_hub.color.upper())
         # i += 1
-        print(self.id, "->", next_hub.id, end=", ")
+        print(
+            self.id,
+            "->",
+            c,
+            next_hub.id,
+            Color.Style.RESET_ALL,
+            end=", ")

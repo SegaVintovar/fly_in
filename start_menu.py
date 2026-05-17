@@ -8,8 +8,13 @@ while running:
     for i in range(len(all_the_maps)):
         print(f"{i + 1}. {all_the_maps[i]}")
     print("Enter 0(Zero) to quit!")
-    next_map = int(input("Your choice: ")) - 1
-    if next_map == -1:
-        running = False
+    try:
+        next_map = int(input("Your choice: ")) - 1
+    except ValueError:
+        print(f"Choice has to be an int in range {len(all_the_maps)}")
     else:
-        subprocess.run(["virt_env/bin/python3", "main.py", all_the_maps[next_map]])
+        if next_map == -1:
+            running = False
+        else:
+            subprocess.run(
+                ["virt_env/bin/python3", "main.py", all_the_maps[next_map]])

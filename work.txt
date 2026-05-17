@@ -48,3 +48,6 @@ yellow
 cyan
 lime
 magenta
+
+
+parsing error handling

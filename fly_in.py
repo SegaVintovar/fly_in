@@ -2,7 +2,7 @@ from enum import Enum
 from drone import Drone
 from collections import deque
 from typing import Set, TYPE_CHECKING
-
+import sys
 
 class Zone(Enum):
     RESTRICTED = 2
@@ -10,7 +10,9 @@ class Zone(Enum):
     NORMAL = 1
     PRIORITY = 1
 
-
+class HubValidationError(Exception):
+    def __init__(self, message: str):
+        self.message = message
 
 
 class Hub():
@@ -31,10 +33,6 @@ class Hub():
         self.rank = 0
         self.waiting_drones: list[tuple[Drone, Hub]] = []
 
-    class HubValidationError(Exception):
-        def __init__(self, message: str):
-            super.__init__(message)
-
     def validate_input(self) -> None:
         self.type = self.input[0]
         tmp = self.input[1].split()
@@ -44,28 +42,75 @@ class Hub():
             self.id, x, y = tmp[0], tmp[1], tmp[2]
             self.meta = " ".join(tmp[3:])
         else:
-            raise ValueError(f"{tmp} is incorrect")
+            print(f"{tmp} is incorrect", file=sys.stderr)
+            sys.exit(1)
         try:
             self.position = (int(x), int(y))
         except Exception as e:
-            raise str(e) + ": position values have to be int"
+            print(str(e), ": position values have to be int",
+                  file=sys.stderr)
+            sys.exit(1)
 
     def validate_meta(self) -> None:
         if self.meta:
+            if not self.meta.startswith("[") or not self.meta.endswith("]"):
+                print(f"{self.meta} is missing [ or ] brckets",
+                      file=sys.stderr)
+                exit(1)
             self.meta = self.meta.strip("[]")
             tmp = self.meta.split(" ")
-            for entry in tmp:
-                key, value = entry.split("=")
-                if key == "max_drones":
-                    self.max_drones = int(value)
-                elif key == "color":
-                    self.color = value
-                elif key == "zone":
-                    self.zone = value.upper()
-                else:
-                    raise self.HubValidationError(
-                        f"{self.id} recieved invalid metadata{entry}")
-
+            try:
+                for entry in tmp:
+                    kw = entry.split("=")
+                    if len(kw) != 2:
+                        raise HubValidationError(
+                            f"{entry} in {tmp} is invalid")
+                    else:
+                        key, value = kw
+                    if key == "max_drones":
+                        # it has to be positive number
+                        tmp = int(value)
+                        if tmp < 0:
+                            raise HubValidationError(
+                                "max_drones has to be positive int"
+                            )
+                        else:
+                            self.max_drones = tmp
+                    elif key == "color":
+                        c = value.strip().upper()
+                        if c in [
+                            "BLACK", "RED",
+                            "GREEN", "YELLOW",
+                            "BLUE", "MAGENTA",
+                            "CYAN", "WHITE",
+                            "PURPLE", "BROWN",
+                            'ORANGE', "MAROON",
+                            "GOLD", "DARKRED",
+                            "VIOLET", "CRIMSON",
+                            "LIME", "RAINBOW" ]:
+                            self.color = c
+                        else:
+                            raise HubValidationError(
+                                f"Unknown color {value}"
+                            )
+                    elif key == "zone":
+                        z = value.upper()
+                        if z in [
+                            "NORMAL", "BLOCKED", "PRIORITY", "RESTRICTED"]:
+                            self.zone = value.upper()
+                        else:
+                            raise HubValidationError(
+                                "Invalid zone"
+                            )
+                    else:
+                        raise HubValidationError(
+                            f"{self.id} recieved invalid metadata{entry}")
+            except HubValidationError as e:
+                print(str(e))
+                exit(1)
+            except Exception as e:
+                print(str(e))
+                exit(1)
 
 class Connection():
     def __init__(self, connection: tuple[str, str], meta: str | None = None):
@@ -94,6 +139,8 @@ class Connection():
             if len(tmp) > 1 and tmp[0] == "max_link_capacity":
                 try:
                     self.link_cap = int(tmp[1])
+                    if self.link_cap < 0:
+                        raise ValueError("max_link_cap has to be positive int")
                 except ValueError as e:
                     raise str(e)
             else:
@@ -136,11 +183,16 @@ class Map():
 
     # only cheapest path taken into account
     def rank_hubs(self) -> None:
-        cheapest_path, cost = min(self.all_pathes, key=lambda x: x[1])
-        i = 0
-        for h in cheapest_path:
-            h.rank = 100 // cost + i
-            i += 1
+        _, min_cost = min(self.all_pathes, key=lambda x: x[1])
+        cheapest_pathes = []
+        for path, cost in self.all_pathes:
+            if cost == min_cost:
+                cheapest_pathes.append(path)
+        for path in cheapest_pathes:
+            i = 0
+            for h in path:
+                h.rank = 100 // cost + i
+                i += 1
 
     def prepare_4_start(self) -> None:
         for connection in self.connections:
@@ -157,12 +209,23 @@ class Map():
             if "end" in hub.id or "goal" in hub.id:
                 self.end_hub = hub
 
+        if self.start_hub.max_drones > self.end_hub.max_drones:
+            print(
+                "Dornes cannot do this trip because of endhub capacity",
+                file=sys.stderr
+                )
+            exit(1)
+
         i = 0
 
-        while i < self.nb_drones:
+        while i < self.nb_drones and i < self.start_hub.max_drones:
             self.start_hub.drones.append(
                 Drone(f"D{i + 1}", self.start_hub.position))
             i += 1
+
+        if self.nb_drones > self.start_hub.max_drones:
+            print("Because of insufficient start_ hub capacity," \
+            "not all the drones were deployed")
 
         # here Exception could happen. use try block here or on top of this method 
         self.validate_connections()
@@ -171,6 +234,8 @@ class Map():
         self.find_valid_path()
         if len(self.all_pathes) == 0:
             raise Exception("There is no path from start to goal")
+        
+
         self.rank_hubs()
         # make path finding and ranking of the hubs
         # for hub in self.hubs:
@@ -204,10 +269,13 @@ class Map():
                 #     and h.zone in ["NORMAL", "PRIORITY", "RESTRICTED"]
                 #     and h.rank > 0
                 #     ]
-                to_visit = [h for h in hub.neighbour_hubs if h.rank > hub.rank]
+                to_visit = [h for h in hub.neighbour_hubs if h.rank > hub.rank
+                            and h.max_drones > (
+                                len(h.drones) + len(h.waiting_drones))]
 
                 # to_visit.sort(key=lambda x: x.rank)
                 # to_visit = [h for h in to_visit if hub.rank < h.rank]
+                # firstly moving waiting drones
                 while hub.waiting_drones:
                     drone, next_hub = hub.waiting_drones.pop()
                     if (
@@ -219,6 +287,11 @@ class Map():
                         drone.move_to(hub, next_hub)
                         i += 1
 
+                # when pushing all the drones further
+                # thing is that to_visit is sorted by rank, so we are always
+                # pushing the Hub that is closes to the Finish
+                # that is why it empties the spot for next drone
+                # that sits in the HUb behind
                 while hub.drones and to_visit:
 
                     if len(to_visit) > 0:
@@ -240,7 +313,8 @@ class Map():
                             # or put drone there and go to the next hub
                             else:
                                 d = hub.drones.pop()
-                                print(f"{d.id} stays in {hub.id}")
+                                # stays in connection self.find_connection(hub, next_hub)
+                                print(f"{d.id} stays in {hub.id}", end=", ")
                                 hub.waiting_drones.append(
                                     (d, next_hub))
                         else:

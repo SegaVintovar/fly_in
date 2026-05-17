@@ -1,24 +1,41 @@
 # py_game.py
 import sys
 import pygame
+# from py_game import K_LEFT
 from fly_in import Map
+import operator
 
-WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-RED = (220, 50, 50)
-BLUE = (60, 120, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+BLUE = (0, 0, 255)
+MAGENTA = (255, 0, 255)
+CYAN = (0, 255, 255)
+WHITE = (255, 255, 255)
+PURPLE = (153, 51, 255)
+BROWN = (165, 82, 0)
+ORANGE = (255, 165, 0)
+MAROON = (128, 0, 0)
+GOLD = (255, 215, 0)
+DARKRED = (139, 0, 0)
+VIOLET = (215, 95, 215)
+CRIMSON = (220, 20, 60)
+LIME = (50, 205, 50)
+RAINBOW = (255, 0, 0)
 
 
 class GameUI:
     def __init__(self, my_map: Map):
         pygame.init()
         self.my_map = my_map
-        self.screen = pygame.display.set_mode((2500, 1200))
+        self.screen = pygame.display.set_mode((1500, 1200))
         pygame.display.set_caption("Fly In")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 24)
         self.step_delay_ms = 1000
         self.last_step = 0
+        self.cam_pos = [0, 0]
 
         self.points = self._build_points()
 
@@ -34,8 +51,8 @@ class GameUI:
             sx = 60 + (x - min_x) * 100
             sy = 60 + (y - min_y) * 100
             return sx, sy
-
-        return {hub.id: convert(hub.position) for hub in self.my_map.hubs}
+        # tuple(map(operator.add, hub.position, self.cam_pos))
+        return {hub.id: convert(tuple(map(operator.add, list(hub.position), self.cam_pos))) for hub in self.my_map.hubs}
 
     def draw(self, i: int):
         self.screen.fill(WHITE)
@@ -54,9 +71,10 @@ class GameUI:
         for hub in self.my_map.hubs:
             pos = self.points[hub.id]
             color = RED if hub == self.my_map.start_hub else BLUE if hub == self.my_map.end_hub else BLACK
+            
             pygame.draw.circle(self.screen, color, pos, 15)
             label = self.font.render(hub.id, True, BLACK)
-            self.screen.blit(label, (pos[0] + 15, pos[1] - 10))
+            self.screen.blit(label, (pos[0] + 15, pos[1] + 15))
 
             # Draw drones on top of the hub
             for i, drone in enumerate(
@@ -69,6 +87,12 @@ class GameUI:
                                    draw_top_left=True,
                                    draw_bottom_left=True,
                                    draw_bottom_right=True)
+                if hub.zone == "RESTRICTED":
+                    to_print = drone.id + "(waiting)"
+                else:
+                    to_print = drone.id
+                d_label = self.font.render(to_print, True, BLACK)
+                self.screen.blit(d_label, (pos[0] + 5, pos[1] + 25 + i * 15))
 
         pygame.display.flip()
 
@@ -78,6 +102,15 @@ class GameUI:
         while running:
 
             now = pygame.time.get_ticks()
+            key = pygame.key.get_pressed()
+            if key[pygame.K_LEFT]:
+                self.cam_pos[0] += 0.1
+                self.points = self._build_points()
+                # move to the left, decrement x
+            elif key[pygame.K_RIGHT]:
+                # increment x
+                self.cam_pos[0] -= 0.1
+                self.points = self._build_points()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -87,7 +120,7 @@ class GameUI:
             if now - self.last_step >= self.step_delay_ms:
                 running = self.my_map.make_move()
                 i += 1
-                print()
+                print("\b\b")
                 self.last_step = now
 
             self.draw(i - 1)
